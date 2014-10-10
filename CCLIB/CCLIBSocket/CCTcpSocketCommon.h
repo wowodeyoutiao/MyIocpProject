@@ -1,0 +1,110 @@
+/**************************************************************************************
+@author: 陈昌
+@content: tcp网络连接的底层库基础 头文件
+**************************************************************************************/
+#ifndef __CC_TCP_SOCKET_COMMON_H__
+#define __CC_TCP_SOCKET_COMMON_H__
+
+#define _WINSOCKAPI_
+#include <Windows.h>
+#include <WinSock2.h>
+#include <thread>
+#include <functional>
+
+//常量定义
+const unsigned long SHUTDOWN_FLAG = 0XFFFFFFFF;   // iocp端口关闭标志
+const int MAX_IOCP_BUFFER_SIZE = 8 * 1024;        // IOCP投递缓冲区大小，一般设置成8k性能较佳
+const int MAX_CLIENT_SEND_BUFFER_SIZE = MAX_IOCP_BUFFER_SIZE * 10 * 1024;  // 客户端可以发送的最大数据缓冲，也是服务器这端阻塞的最大客户端缓冲区  80M 
+
+//定义的回调函数
+typedef std::function<void (void* Sender)> TNotifyEvent;
+typedef std::function<void (void* Sender, const char* pBuf, int iBufLen)> TOnSocketRead;   
+typedef std::function<void (void* Sender, int& iErrorCode)> TOnSocketError;
+typedef std::function<bool (const std::string& sIp)> TOnCheckAddress;
+typedef std::function<void (HANDLE hIocp, SOCKET hSocket, std::string& sRAddress, int iRPort)> TOnSocketAccept;
+class CClientConnector;
+typedef std::function<CClientConnector* (const std::string& sIP)> TOnCreateClient;
+
+/**
+* 发送缓冲节点结构
+*/
+typedef struct _TSendBufferNode
+{
+	char* szBuf;             
+	int nBufLen;             // 长度
+	int nStart;              // 起始位置
+	_TSendBufferNode* Next;  // 下个节点指针 
+}TSendBufferNode, *PSendBufferNode;
+
+//报错的枚举类型
+enum TSocketErrorType {seConnect, seRead, seSend, seClose};
+
+//socket事件的枚举类型
+enum TSocketEvent {soIdle, soWrite, soRead};
+
+/**
+* 重叠io的结构体
+*/
+typedef struct _TBlock
+{
+	OVERLAPPED Overlapped;					//重叠
+	WSABUF wsaBuffer;						//系统缓冲
+	TSocketEvent Event;						//标记Socket读写
+	char Buffer[MAX_IOCP_BUFFER_SIZE - 1];	//用户缓冲
+}TBlock, *PBlock;
+
+/*
+* 自旋锁的实现，比互斥锁更高效（不会休眠）,单占用cpu
+*/
+enum {LOCK_IS_FREE = 0, LOCK_IS_TAKEN = 1};
+#define LOCK(l) while(InterlockedCompareExchange(&l, LOCK_IS_TAKEN, LOCK_IS_FREE) == 1) {};
+#define UNLOCK(l) InterlockedExchange(&l, LOCK_IS_FREE);
+
+//通过WSAStartup函数完成对Winsock服务的初始化
+bool DoInitialWinSocket();
+
+//终止Winsock 2 DLL (Ws2_32.dll) 的使用
+void DoFinalizeWinSocket();
+
+//Debug信息
+void SendDebugString(const std::string& sInfo);
+
+/*
+* 挂载到线程上运行的对象基类
+*
+*/
+class CExecutableBase
+{
+public:
+	CExecutableBase() : m_BoTerminated(false), m_pThread(nullptr)
+	{
+		m_Event = CreateEvent(nullptr, false, false, nullptr);
+	}
+	virtual ~CExecutableBase()
+	{
+		if (nullptr != m_pThread)
+		{
+			Terminate();
+			SetEvent(m_Event);
+			WaitForSingleObject(m_Event, INFINITE);
+			delete m_pThread;
+		}
+		CloseHandle(m_Event);
+	}
+	void InitialWorkThread()
+	{
+		if (nullptr == m_pThread)
+			m_pThread = new std::thread(&CExecutableBase::Execute, this);
+	}
+	virtual void Execute() = 0;
+protected:
+	void Terminate() { m_BoTerminated = true; }
+	bool IsTerminated(){ return m_BoTerminated;}
+protected:
+	std::thread* m_pThread;          // 内部执行线程指针
+	HANDLE m_Event;                  // 网络事件句柄
+private:
+	bool m_BoTerminated;             // 停止Execute方法的循环执行标记
+};
+
+#endif //__CC_TCP_SOCKET_COMMON_H__
