@@ -41,8 +41,6 @@ public:
 	int SendText(const std::string& s);
 	void IocpSendback(int iTransfered);
 	bool IocpReadback(int iTransfered);
-	virtual void OnCreate(){}
-	virtual void OnDestroy(){}
 protected:
 	virtual void Execute(unsigned long ulTick){}
 	virtual void SocketRead(const char* pBuf, int iCount){}
@@ -56,8 +54,8 @@ private:
 	bool IsBlock(int iMaxBlockSize);
 private:
     SOCKET m_Socket;
-	std::string m_RemoteAddress;
-	int m_RemotePort;
+	std::string m_sRemoteAddress;
+	int m_iRemotePort;
 	unsigned short m_SocketHandle;      // 对应CIOCPServerSocketManager::m_HandleBuckets的handle值
 	PSendBufferNode m_First, m_Last;
 	bool m_bSending;
@@ -66,10 +64,10 @@ private:
 	TBlock m_RecvBlock;
 	std::mutex m_LockCS;                // 队列操作使用的互斥锁
 	TOnSocketError m_OnSocketError;
-	int m_TotalBufferLen;
-	unsigned long m_ActiveTick;
-	unsigned long m_LastSendTick;
-	unsigned long m_BufferFullTick;		// 客户端发送缓冲区堆积满数据多久后踢掉
+	int m_iTotalBufferLen;
+	unsigned long m_ulActiveTick;
+	unsigned long m_ulLastSendTick;
+	unsigned long m_ulBufferFullTick;	// 客户端发送缓冲区堆积满数据多久后踢掉
 friend class CIOCPServerSocketManager;
 };
 
@@ -145,11 +143,9 @@ public:
 	bool IsActive(){ return (m_MainWorker != nullptr); }
     void Execute();							 //子类不重载此方法
 	bool DoCheckConnect(const std::string& sRemoteAddress);
-	virtual void OnCreate(){}            	 // 创建后，使用对象调用
-	virtual void OnDestroy(){}				 // 在析构函数确认线程结束后的最前面调用
 public:
-	std::string m_Address;					 // 本地IP
-	int m_Port;								 // 监听端口
+	std::string m_sLocalIP;					 // 本地IP
+	int m_iListenPort;	     				 // 监听端口
     TNotifyEvent m_OnConnect;
     TNotifyEvent m_OnDisConnect;  
 	TNotifyEvent m_OnListenReady; 
@@ -159,8 +155,8 @@ public:
 protected:
 	virtual void DoActive(){}         // Open 后在Execute中调用
     void* ValueOf(const int iKey);  
-	void SetMaxCorpseTime(const int iTime){ m_MaxCorpseTime = iTime; }
-	void SetMaxBlockSize(const int iSize){ m_MaxBlockSize = iSize; }
+	void SetMaxCorpseTime(const int iTime){ m_iMaxCorpseTime = iTime; }
+	void SetMaxBlockSize(const int iSize){ m_iMaxBlockSize = iSize; }
 private: 
 	void DoReady(void* Sender);
 	void DoSocketClose(void* Sender);
@@ -178,16 +174,16 @@ private:
 	PPHashPortItem FindPortItemPointer(const int iKey);             //这里需要返回的是PortItem的指针
 private:
 	CMainIOCPWorker* m_MainWorker;           // 主工作对象，负责Accept，和管理收发子线程组
-	int m_MaxCorpseTime;				     //	客户端和服务器无通信的最长维护时间--否则断线
-	int m_MaxBlockSize;						 // 客户端阻塞后，服务器为该客户端的阻塞缓冲区最大值--否则断线
+	int m_iMaxCorpseTime;				     //	客户端和服务器无通信的最长维护时间--否则断线
+	int m_iMaxBlockSize;					 // 客户端阻塞后，服务器为该客户端的阻塞缓冲区最大值--否则断线
 	std::mutex m_LockCS;                     // 临界区操作使用的互斥锁
-	bool m_BoDelayFree;                      // 处理延时释放客户端连接的标记
+	bool m_bDelayFree;                       // 处理延时释放客户端连接的标记
 	PDelayFreeNode m_DFNFirst;               // 延时释放的头节点
 	PDelayFreeNode m_DFNLast;				 // 延时释放的尾节点
 	std::list<void*> m_ActiveConnects;		 // 维护当前连接客户端的对象列表，该成员变量还是需要对外开放，最少需要对子类开放
-	unsigned short m_NewCreateHandle;		 // 最新创建的Handle编号，保存
-	int m_DelayFreeHandleCount;				 // 当前正在延时释放的客户端句柄数量
-	int m_HashHandleCount;					 //	当前连接中的客户端句柄数量
+	unsigned short m_usNewCreateHandle;		 // 最新创建的Handle编号，保存
+	int m_iDelayFreeHandleCount;			 // 当前正在延时释放的客户端句柄数量
+	int m_iHashHandleCount;  				 //	当前连接中的客户端句柄数量
 	PPHashPortItem m_HandleBuckets;			 // 用于存储客户端对象的简易hash
 };
 

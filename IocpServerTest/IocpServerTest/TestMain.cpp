@@ -14,12 +14,11 @@ int _tmain(int argc, _TCHAR* argv[])
 	if (DoInitialWinSocket())
 	{
 		CSampleServerManager sampleServer;
-		sampleServer.OnCreate();
 		sampleServer.InitialWorkThread();
 		if (!sampleServer.IsActive())
 		{
-			sampleServer.m_Address = "0.0.0.0";
-			sampleServer.m_Port = 7001;
+			sampleServer.m_sLocalIP = "0.0.0.0";
+			sampleServer.m_iListenPort = 7001;
 			sampleServer.Open();
 
 			HANDLE m_Event = CreateEvent(nullptr, false, false, nullptr);

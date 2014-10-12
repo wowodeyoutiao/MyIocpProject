@@ -14,9 +14,8 @@ int _tmain(int argc, _TCHAR* argv[])
 	if (DoInitialWinSocket())
 	{
 		CSampleClientManager sampleServer;
-		sampleServer.OnCreate();
-		sampleServer.InitialWorkThread();
 		sampleServer.ConnectToServer("127.0.0.1", 7001);
+		sampleServer.InitialWorkThread();
 
 		HANDLE m_Event = CreateEvent(nullptr, false, false, nullptr);
 		while (true)

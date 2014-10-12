@@ -21,13 +21,12 @@ void CSampleConnector::SocketRead(const char* pBuf, int iCount)
 	SendDebugString("CSampleConnector 读取数据");
 }
 
-void CSampleConnector::OnCreate()
+CSampleConnector::CSampleConnector() :m_ulLastRunTick(0)
 {
-	m_ulLastRunTick = 0;
 	SendDebugString("CSampleConnector 创建");
 }
 
-void CSampleConnector::OnDestroy()
+CSampleConnector::~CSampleConnector()
 {
 	SendDebugString("CSampleConnector 销毁");
 }
@@ -36,7 +35,7 @@ void CSampleConnector::OnDestroy()
 
 
 /************************Start Of CSampleServerManager************************************************/
-void CSampleServerManager::OnCreate()
+CSampleServerManager::CSampleServerManager()
 {
 	SendDebugString("CSampleServerManager 创建");
 	m_OnCheckAddress = std::bind(&CSampleServerManager::OnCheckIPAddress, this, std::placeholders::_1);
@@ -46,7 +45,7 @@ void CSampleServerManager::OnCreate()
 	m_OnDisConnect = std::bind(&CSampleServerManager::OnClientDisconnect, this, std::placeholders::_1);
 }
 
-void CSampleServerManager::OnDestroy()
+CSampleServerManager::~CSampleServerManager()
 {
 	SendDebugString("CSampleServerManager 销毁");
 }

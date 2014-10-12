@@ -7,7 +7,7 @@
 
 /************************Start Of CIocpSampleClient******************************************/
 
-void CSampleClientManager::OnCreate()
+CSampleClientManager::CSampleClientManager()
 {
 	SendDebugString("CSampleClientManager ´´½¨");
 	m_OnConnect = std::bind(&CSampleClientManager::OnSocketConnect, this, std::placeholders::_1);
@@ -16,7 +16,7 @@ void CSampleClientManager::OnCreate()
 	m_OnError = std::bind(&CSampleClientManager::OnSocketError, this, std::placeholders::_1, std::placeholders::_2);
 }
 
-void CSampleClientManager::OnDestroy()
+CSampleClientManager::~CSampleClientManager()
 {
 	SendDebugString("CSampleClientManager Ïú»Ù");
 }

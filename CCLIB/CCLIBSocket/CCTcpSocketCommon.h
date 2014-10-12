@@ -97,11 +97,11 @@ public:
 			m_pThread = new std::thread(&CExecutableBase::Execute, this);
 	}
 	virtual void Execute() = 0;
+	std::thread* m_pThread;          // 内部执行线程指针
 protected:
 	void Terminate() { m_BoTerminated = true; }
 	bool IsTerminated(){ return m_BoTerminated;}
 protected:
-	std::thread* m_pThread;          // 内部执行线程指针
 	HANDLE m_Event;                  // 网络事件句柄
 private:
 	bool m_BoTerminated;             // 停止Execute方法的循环执行标记

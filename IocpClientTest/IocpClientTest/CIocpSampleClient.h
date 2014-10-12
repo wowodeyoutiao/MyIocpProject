@@ -16,8 +16,8 @@
 class CSampleClientManager : public CIOCPClientSocketManager
 {
 public:
-	virtual void OnCreate();
-	virtual void OnDestroy();
+	CSampleClientManager();
+	virtual ~CSampleClientManager();
 	void ConnectToServer(const std::string& sIP, const int iPort);
 	void Disconnect();
 	bool SendToServer();

@@ -41,6 +41,7 @@ private:
 private:
 	SOCKET m_CSocket;                   // 原始套接字
 	HANDLE m_Event;                     // 网络事件句柄
+
     std::mutex m_SendCS;                // 发送队列使用的互斥锁
     PSendBufferNode m_First, m_Last;    // 发送缓冲区链表
     int m_Count;                        // 发送队列的个数
@@ -75,8 +76,6 @@ public:
 	bool IsConnected(){ return m_BoConnected; }
 	void SetReconnectInterval(unsigned long interval){ m_Reconnect_Interval = interval; }
     void Execute();						//子类不重载此方法
-	virtual void OnCreate(){}
-	virtual void OnDestroy(){}
 public:
     TOnSocketRead m_OnRead;
 	TOnSocketError m_OnError;

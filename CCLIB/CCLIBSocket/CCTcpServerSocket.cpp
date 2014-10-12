@@ -292,9 +292,9 @@ bool CMainIOCPWorker :: Start(const std::string& sIP, int iPort)
 
 /************************Start Of CClientConnector**************************************************/
 
-CClientConnector :: CClientConnector():m_Socket(INVALID_SOCKET), m_RemoteAddress(""), m_RemotePort(0), m_SocketHandle(0),
-	m_First(nullptr), m_Last(nullptr), m_bSending(false), m_bSafeClose(false), m_OnSocketError(nullptr), m_TotalBufferLen(0), m_ActiveTick(GetTickCount()),
-	m_LastSendTick(0), m_BufferFullTick(0)
+CClientConnector :: CClientConnector():m_Socket(INVALID_SOCKET), m_sRemoteAddress(""), m_iRemotePort(0), m_SocketHandle(0),
+	m_First(nullptr), m_Last(nullptr), m_bSending(false), m_bSafeClose(false), m_OnSocketError(nullptr), m_iTotalBufferLen(0), m_ulActiveTick(GetTickCount()),
+	m_ulLastSendTick(0), m_ulBufferFullTick(0)
 {
 	memset(&m_SendBlock, 0, sizeof(m_SendBlock));
 	memset(&m_RecvBlock, 0, sizeof(m_RecvBlock));
@@ -326,7 +326,7 @@ int CClientConnector :: SendBuf(const char* pBuf, int iCount)
 	{
 		std::lock_guard<std::mutex> guard(m_LockCS); 
 		iSendLen = iCount;
-		m_TotalBufferLen += iCount;
+		m_iTotalBufferLen += iCount;
 		bool bSuccess = false;
 		if (m_Last != nullptr)
 		{
@@ -378,7 +378,7 @@ int CClientConnector :: SendText(const std::string& s)
 
 void CClientConnector :: UpdateActive()
 {
-	m_ActiveTick = GetTickCount();
+	m_ulActiveTick = GetTickCount();
 }
 
 void CClientConnector :: Clear()
@@ -400,9 +400,9 @@ void CClientConnector :: PrepareSend(int iUntreated, int iTransfered)
 	if (INVALID_SOCKET == m_Socket)
 		return;
 	std::lock_guard<std::mutex> guard(m_LockCS);
-	m_TotalBufferLen -= iTransfered;
-	if (m_TotalBufferLen < 0)
-		m_TotalBufferLen = 0;
+	m_iTotalBufferLen -= iTransfered;
+	if (m_iTotalBufferLen < 0)
+		m_iTotalBufferLen = 0;
 	PSendBufferNode pNode = nullptr;
 	int iRemainLen = 0;
 	//从队列中取等待发送的数据
@@ -538,9 +538,9 @@ void CClientConnector :: DoActive(unsigned long ulTick)
 		Close();
 		return;
 	}
-	if ((ulTick - m_LastSendTick >= 40) || (m_TotalBufferLen >= MAX_IOCP_BUFFER_SIZE))
+	if ((ulTick - m_ulLastSendTick >= 40) || (m_iTotalBufferLen >= MAX_IOCP_BUFFER_SIZE))
 	{
-		m_LastSendTick = ulTick;
+		m_ulLastSendTick = ulTick;
 		{
 			std::lock_guard<std::mutex> guard(m_LockCS);
 			if (!m_bSending)
@@ -552,20 +552,20 @@ void CClientConnector :: DoActive(unsigned long ulTick)
 
 bool CClientConnector :: IsCorpse(unsigned long ulTick, unsigned long ulMaxCorpseTime)
 {
-	return ((ulTick > m_ActiveTick) && (ulTick - m_ActiveTick > ulMaxCorpseTime));
+	return ((ulTick > m_ulActiveTick) && (ulTick - m_ulActiveTick > ulMaxCorpseTime));
 }
 
 bool CClientConnector :: IsBlock(int iMaxBlockSize)
 {
-	bool retflag = (m_TotalBufferLen > iMaxBlockSize);
+	bool retflag = (m_iTotalBufferLen > iMaxBlockSize);
 	if (retflag)
 	{
-		if (m_BufferFullTick = 0)
+		if (m_ulBufferFullTick = 0)
 		{
-			m_BufferFullTick = GetTickCount();
+			m_ulBufferFullTick = GetTickCount();
 			retflag = false;
 		}
-		else if (GetTickCount() < m_BufferFullTick + MAX_BLOCK_CONTINUE_TIME)
+		else if (GetTickCount() < m_ulBufferFullTick + MAX_BLOCK_CONTINUE_TIME)
 		{
 			//对于网络较差的远端，在大流量数据冲击的时候，给予一定的缓冲时间
 			retflag = false;
@@ -573,7 +573,7 @@ bool CClientConnector :: IsBlock(int iMaxBlockSize)
 	}
 	else 
 	{
-		m_BufferFullTick = 0;
+		m_ulBufferFullTick = 0;
 	}
 	return retflag;
 }
@@ -583,10 +583,10 @@ bool CClientConnector :: IsBlock(int iMaxBlockSize)
 
 /************************Start Of CIOCPServerSocketManager******************************************/
 
-CIOCPServerSocketManager :: CIOCPServerSocketManager():m_Address(""), m_Port(0), m_OnConnect(nullptr), m_OnDisConnect(nullptr),
+CIOCPServerSocketManager :: CIOCPServerSocketManager():m_sLocalIP(""), m_iListenPort(0), m_OnConnect(nullptr), m_OnDisConnect(nullptr),
 	m_OnListenReady(nullptr), m_OnClientError(nullptr), m_OnCreateClient(nullptr), m_OnCheckAddress(nullptr), m_MainWorker(nullptr),
-	m_MaxCorpseTime(DEFAULT_CLIENT_CORPSE_TIME), m_MaxBlockSize(MAX_CLIENT_SEND_BUFFER_SIZE), m_BoDelayFree(false),
-	m_DFNFirst(nullptr), m_DFNLast(nullptr), m_NewCreateHandle(1000), m_DelayFreeHandleCount(0), m_HashHandleCount(0)
+	m_iMaxCorpseTime(DEFAULT_CLIENT_CORPSE_TIME), m_iMaxBlockSize(MAX_CLIENT_SEND_BUFFER_SIZE), m_bDelayFree(false),
+	m_DFNFirst(nullptr), m_DFNLast(nullptr), m_usNewCreateHandle(1000), m_iDelayFreeHandleCount(0), m_iHashHandleCount(0)
 {
 	m_HandleBuckets = new PHashPortItem[MAX_HASH_BUCKETS_SIZE];
 	for (int i = 0; i < MAX_HASH_BUCKETS_SIZE; i++)
@@ -616,7 +616,7 @@ void CIOCPServerSocketManager :: Open()
 		pWorker->m_OnSocketClose = std::bind(&CIOCPServerSocketManager::DoSocketClose, this, std::placeholders::_1);
 		pWorker->m_OnReady = std::bind(&CIOCPServerSocketManager::DoReady, this, std::placeholders::_1);
 
-		if (pWorker->Start(m_Address, m_Port))
+		if (pWorker->Start(m_sLocalIP, m_iListenPort))
 		{
 			m_MainWorker = pWorker;
 			m_MainWorker->InitialWorkThread();
@@ -651,7 +651,7 @@ void CIOCPServerSocketManager :: Close()
 
 	for (int i=1; i<=100; i++)
 	{
-		if (0 == m_HashHandleCount)
+		if (0 == m_iHashHandleCount)
 		  break;
 		WaitForSingleObject(m_Event, 100);
 	}
@@ -689,13 +689,13 @@ void CIOCPServerSocketManager :: Execute()
 				for (vIter=m_ActiveConnects.begin(); vIter!=m_ActiveConnects.end(); ++vIter)
 				{
 					client = (CClientConnector*)*vIter;
-					if (client->IsCorpse(ulTick, m_MaxCorpseTime))
+					if (client->IsCorpse(ulTick, m_iMaxCorpseTime))
 					{
 						iErrorCode = -100;
 						DoClientError(client, iErrorCode);
 						client->Close();
 					}
-					else if (client->IsBlock(m_MaxBlockSize))
+					else if (client->IsBlock(m_iMaxBlockSize))
 					{
 						iErrorCode = -101;
 						DoClientError(client, iErrorCode);
@@ -706,10 +706,10 @@ void CIOCPServerSocketManager :: Execute()
 				}
 			}
 
-			if (m_BoDelayFree && (ulTick - ulDelayTick >= 2000))
+			if (m_bDelayFree && (ulTick - ulDelayTick >= 2000))
 			{
 				ulDelayTick = ulTick;
-				m_BoDelayFree = DelayFreeClient(ulTick);
+				m_bDelayFree = DelayFreeClient(ulTick);
 			}
 			if ((!IsTerminated()) && (IsActive()))
 				DoActive();
@@ -767,8 +767,8 @@ void CIOCPServerSocketManager :: DoSocketClose(void* Sender)
 			else
 				m_DFNFirst = pNode;
 			m_DFNLast = pNode;
-			++m_DelayFreeHandleCount;
-			m_BoDelayFree = true;
+			++m_iDelayFreeHandleCount;
+			m_bDelayFree = true;
 
 			if (nullptr != m_OnDisConnect)
 				m_OnDisConnect(this);
@@ -792,13 +792,12 @@ void CIOCPServerSocketManager :: DoSocketAccept(HANDLE hIOCP, SOCKET hSocket, co
 			pClient = m_OnCreateClient(sRemoteAddress);
 		else
 			pClient = new CClientConnector;
-		pClient->OnCreate();
 
 		if (CreateIoCompletionPort((HANDLE)hSocket, hIOCP, (ULONG_PTR)pClient, 0) > 0)
 		{
 			pClient->m_Socket = hSocket;
-			pClient->m_RemoteAddress = sRemoteAddress;
-			pClient->m_RemotePort = iRemotePort;
+			pClient->m_sRemoteAddress = sRemoteAddress;
+			pClient->m_iRemotePort = iRemotePort;
 			pClient->m_SocketHandle = usHandle;
 			pClient->m_OnSocketError = std::bind(&CIOCPServerSocketManager::DoClientError, this, std::placeholders::_1, std::placeholders::_2);
 			bAcceptOK = true;
@@ -852,7 +851,6 @@ bool CIOCPServerSocketManager :: DelayFreeClient(unsigned long ulTick)
 		{
 			if ((ulTick > pNode->ulAddTick) && (ulTick - pNode->ulAddTick >= MAX_CLIENT_DELAY_TIME))
 			{
-				((CClientConnector*)pNode->pObj)->OnDestroy();
 				delete((CClientConnector*)pNode->pObj);   
 				pNode->pObj = nullptr;
 			}
@@ -885,15 +883,15 @@ unsigned short CIOCPServerSocketManager :: AllocHandle()
 			delete(pNode->pObj);
 			pNode->pObj = nullptr;
 			delete(pNode);
-			--m_DelayFreeHandleCount;
+			--m_iDelayFreeHandleCount;
 		}
 	}
 	if (0 == usRetHandle)
 	{
-		if (m_NewCreateHandle < MAXWORD)
+		if (m_usNewCreateHandle < MAXWORD)
 		{
-			++m_NewCreateHandle;
-			usRetHandle = m_NewCreateHandle;
+			++m_usNewCreateHandle;
+			usRetHandle = m_usNewCreateHandle;
 		}
 	}
 	return usRetHandle;
@@ -921,7 +919,7 @@ void CIOCPServerSocketManager :: ClearHandles()
 		}
 		m_HandleBuckets[i] = nullptr;
 	}
-	m_HashHandleCount = 0;
+	m_iHashHandleCount = 0;
 }
 
 void CIOCPServerSocketManager :: AddPortItem(const int iKey, void* pClient)
@@ -932,7 +930,7 @@ void CIOCPServerSocketManager :: AddPortItem(const int iKey, void* pClient)
 	pItem->pItem = pClient;
 	pItem->Next = m_HandleBuckets[iHash];
 	m_HandleBuckets[iHash] = pItem;
-	++m_HashHandleCount;
+	++m_iHashHandleCount;
 }
 
 void CIOCPServerSocketManager :: RemovePortItem(const int iKey)
@@ -943,7 +941,7 @@ void CIOCPServerSocketManager :: RemovePortItem(const int iKey)
 	{
 		*pPrePointer = pItem->Next;
 		delete(pItem);
-		--m_HashHandleCount;
+		--m_iHashHandleCount;
 	}
 }
 
@@ -963,7 +961,7 @@ void CIOCPServerSocketManager :: ClearPortItem()
 		}
 		m_HandleBuckets[i] = nullptr;
 	}
-	m_HashHandleCount = 0;
+	m_iHashHandleCount = 0;
 }
 
 PPHashPortItem CIOCPServerSocketManager :: FindPortItemPointer(const int iKey)

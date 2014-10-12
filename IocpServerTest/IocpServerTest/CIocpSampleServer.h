@@ -16,8 +16,8 @@
 class CSampleConnector : public CClientConnector
 {
 public:
-	virtual void OnCreate();
-	virtual void OnDestroy();
+	CSampleConnector();
+	~CSampleConnector();
 protected:
 	virtual void Execute(unsigned long ulTick);
 	virtual void SocketRead(const char* pBuf, int iCount);
@@ -33,8 +33,8 @@ private:
 class CSampleServerManager : public CIOCPServerSocketManager
 {
 public:
-	virtual void OnCreate();
-	virtual void OnDestroy();
+	CSampleServerManager();
+	virtual ~CSampleServerManager();
 protected:
 	virtual void DoActive();
 private:
