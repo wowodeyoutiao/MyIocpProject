@@ -39,7 +39,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>E:\MyProject\C++Project\MyIocpProject\CCLIB\CCLIBSocket;E:\MyProject\C++Project\MyIocpProject\CCLIB;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\CCLIB\CCLIBSocket;..\..\CCLIB;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
