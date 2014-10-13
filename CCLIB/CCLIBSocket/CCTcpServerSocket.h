@@ -7,14 +7,8 @@
 
 #include <mutex>
 #include <list>
+#include "CCUtils.h"
 #include "CCTcpSocketCommon.h"
-
-typedef struct _THashPortItem
-{	
-	int iHandle;
-	void* pItem;
-	_THashPortItem* Next;
-}THashPortItem, *PHashPortItem, **PPHashPortItem;
 
 //用于管理延时释放客户端的链表结构
 typedef struct _TDelayFreeNode
@@ -167,11 +161,6 @@ private:
 	bool DelayFreeClient(unsigned long ulTick);
 	unsigned short AllocHandle();
 	void AddClient(int iHandle, void* pClient);
-	void ClearHandles();
-	void AddPortItem(const int iKey, void* pClient);
-	void RemovePortItem(const int iKey);
-	void ClearPortItem();
-	PPHashPortItem FindPortItemPointer(const int iKey);             //这里需要返回的是PortItem的指针
 private:
 	CMainIOCPWorker* m_MainWorker;           // 主工作对象，负责Accept，和管理收发子线程组
 	int m_iMaxCorpseTime;				     //	客户端和服务器无通信的最长维护时间--否则断线
@@ -183,8 +172,7 @@ private:
 	std::list<void*> m_ActiveConnects;		 // 维护当前连接客户端的对象列表，该成员变量还是需要对外开放，最少需要对子类开放
 	unsigned short m_usNewCreateHandle;		 // 最新创建的Handle编号，保存
 	int m_iDelayFreeHandleCount;			 // 当前正在延时释放的客户端句柄数量
-	int m_iHashHandleCount;  				 //	当前连接中的客户端句柄数量
-	PPHashPortItem m_HandleBuckets;			 // 用于存储客户端对象的简易hash
+	TSimpleHash m_QueryClientHash;           // 用于查询客户端连接的简易hash，只存放对象指针，不负责创建释放对象
 };
 
 #endif //__CC_TCP_SERVER_SOCKET_H__

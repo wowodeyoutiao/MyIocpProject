@@ -41,7 +41,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>E:\MyProject\C++Project\MyIocpProject\CCLIB\CCLIBSocket;$(IncludePath)</IncludePath>
+    <IncludePath>E:\MyProject\C++Project\MyIocpProject\CCLIB\CCLIBSocket;E:\MyProject\C++Project\MyIocpProject\CCLIB;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -82,12 +82,14 @@
     <ClInclude Include="..\..\CCLIB\CCLIBSocket\CCTcpClientSocket.h" />
     <ClInclude Include="..\..\CCLIB\CCLIBSocket\CCTcpServerSocket.h" />
     <ClInclude Include="..\..\CCLIB\CCLIBSocket\CCTcpSocketCommon.h" />
+    <ClInclude Include="..\..\CCLIB\CCUtils.h" />
     <ClInclude Include="CIocpSampleServer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\CCLIB\CCLIBSocket\CCTcpClientSocket.cpp" />
     <ClCompile Include="..\..\CCLIB\CCLIBSocket\CCTcpServerSocket.cpp" />
     <ClCompile Include="..\..\CCLIB\CCLIBSocket\CCTcpSocketCommon.cpp" />
+    <ClCompile Include="..\..\CCLIB\CCUtils.cpp" />
     <ClCompile Include="CIocpSampleServer.cpp" />
     <ClCompile Include="TestMain.cpp" />
   </ItemGroup>

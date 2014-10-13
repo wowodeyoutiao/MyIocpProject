@@ -9,14 +9,27 @@
 
 using namespace std;
 
+void DoRunThread()
+{
+	CSampleClientManager sampleServer;
+	sampleServer.ConnectToServer("127.0.0.1", 7001);
+	sampleServer.InitialWorkThread();
+	HANDLE m_Event = CreateEvent(nullptr, false, false, nullptr);
+	while (true)
+	{
+		WaitForSingleObject(m_Event, 100);
+	}
+}
+
 int _tmain(int argc, _TCHAR* argv[])
 {
+	std::thread* pClientThreads[10];
 	if (DoInitialWinSocket())
 	{
-		CSampleClientManager sampleServer;
-		sampleServer.ConnectToServer("127.0.0.1", 7001);
-		sampleServer.InitialWorkThread();
-
+		for (int i = 0; i < 10; i++)
+		{
+			pClientThreads[i] = new std::thread(DoRunThread);
+		}
 		HANDLE m_Event = CreateEvent(nullptr, false, false, nullptr);
 		while (true)
 		{

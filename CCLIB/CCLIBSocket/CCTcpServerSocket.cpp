@@ -586,11 +586,9 @@ bool CClientConnector :: IsBlock(int iMaxBlockSize)
 CIOCPServerSocketManager :: CIOCPServerSocketManager():m_sLocalIP(""), m_iListenPort(0), m_OnConnect(nullptr), m_OnDisConnect(nullptr),
 	m_OnListenReady(nullptr), m_OnClientError(nullptr), m_OnCreateClient(nullptr), m_OnCheckAddress(nullptr), m_MainWorker(nullptr),
 	m_iMaxCorpseTime(DEFAULT_CLIENT_CORPSE_TIME), m_iMaxBlockSize(MAX_CLIENT_SEND_BUFFER_SIZE), m_bDelayFree(false),
-	m_DFNFirst(nullptr), m_DFNLast(nullptr), m_usNewCreateHandle(1000), m_iDelayFreeHandleCount(0), m_iHashHandleCount(0)
+	m_DFNFirst(nullptr), m_DFNLast(nullptr), m_usNewCreateHandle(1000), m_iDelayFreeHandleCount(0)
 {
-	m_HandleBuckets = new PHashPortItem[MAX_HASH_BUCKETS_SIZE];
-	for (int i = 0; i < MAX_HASH_BUCKETS_SIZE; i++)
-		m_HandleBuckets[i] = nullptr;
+	m_QueryClientHash.DoInitial(MAX_HASH_BUCKETS_SIZE);
 }
 
 CIOCPServerSocketManager :: ~CIOCPServerSocketManager()
@@ -601,7 +599,7 @@ CIOCPServerSocketManager :: ~CIOCPServerSocketManager()
 		SetEvent(m_Event);
 		WaitForSingleObject(m_Event, INFINITE);
 	}
-	ClearHandles();
+	m_QueryClientHash.ClearAllPortItems();
 }
 
 void CIOCPServerSocketManager :: Open()
@@ -651,7 +649,7 @@ void CIOCPServerSocketManager :: Close()
 
 	for (int i=1; i<=100; i++)
 	{
-		if (0 == m_iHashHandleCount)
+		if (0 == m_QueryClientHash.GetItemCount())
 		  break;
 		WaitForSingleObject(m_Event, 100);
 	}
@@ -666,7 +664,7 @@ void CIOCPServerSocketManager :: Close()
 			delete(client);
 		}
 		m_ActiveConnects.clear();
-		ClearPortItem();
+		m_QueryClientHash.ClearAllPortItems();
 	}	
 	m_OnCreateClient = funOldCreateClient;						//重新装载上m_OnCreateClient
 }
@@ -734,9 +732,9 @@ bool CIOCPServerSocketManager :: DoCheckConnect(const std::string& sRemoteAddres
 
 void* CIOCPServerSocketManager :: ValueOf(const int iKey)
 {
-	PHashPortItem pItem = *(FindPortItemPointer(iKey));
-	if (pItem != nullptr)
-		return pItem;
+	PPHashPortItem ppItem = m_QueryClientHash.FindPortItemPointer(iKey);
+	if (ppItem != nullptr)
+		return (*ppItem)->pItem;
 	else
 		return nullptr;
 }
@@ -761,7 +759,7 @@ void CIOCPServerSocketManager :: DoSocketClose(void* Sender)
 			pNode->ulAddTick = (unsigned long)GetTickCount();
 			pNode->pObj = Sender;
 			pNode->Next = nullptr;
-			RemovePortItem(pNode->usHandle);
+			m_QueryClientHash.RemovePortItem(pNode->usHandle);
 			if (m_DFNLast != nullptr)
 				m_DFNLast->Next = pNode;
 			else
@@ -901,81 +899,8 @@ void CIOCPServerSocketManager :: AddClient(int iHandle, void* pClient)
 {
 	std::lock_guard<std::mutex> guard(m_LockCS);
 	m_ActiveConnects.push_back(pClient);
-	AddPortItem(iHandle, pClient);
+	m_QueryClientHash.AddPortItem(iHandle, pClient);
 }
 
-void CIOCPServerSocketManager :: ClearHandles()
-{
-	PHashPortItem pItem;
-	PHashPortItem pNextItem;
-	for (int i=0; i<MAX_HASH_BUCKETS_SIZE; i++)
-	{
-		pItem = m_HandleBuckets[i];
-		while (pItem != nullptr)
-		{
-			pNextItem = pItem->Next;
-			delete(pItem);
-			pItem = pNextItem;
-		}
-		m_HandleBuckets[i] = nullptr;
-	}
-	m_iHashHandleCount = 0;
-}
-
-void CIOCPServerSocketManager :: AddPortItem(const int iKey, void* pClient)
-{
-	int iHash = iKey % MAX_HASH_BUCKETS_SIZE;
-	PHashPortItem pItem = new THashPortItem;
-	pItem->iHandle = iKey;
-	pItem->pItem = pClient;
-	pItem->Next = m_HandleBuckets[iHash];
-	m_HandleBuckets[iHash] = pItem;
-	++m_iHashHandleCount;
-}
-
-void CIOCPServerSocketManager :: RemovePortItem(const int iKey)
-{
-	PPHashPortItem pPrePointer = FindPortItemPointer(iKey);
-	PHashPortItem pItem = *pPrePointer;
-	if (pItem != nullptr)
-	{
-		*pPrePointer = pItem->Next;
-		delete(pItem);
-		--m_iHashHandleCount;
-	}
-}
-
-void CIOCPServerSocketManager :: ClearPortItem()
-{
-	PHashPortItem pItem = nullptr;
-	PHashPortItem pNextItem = nullptr;
-
-	for (int i=0; i<MAX_HASH_BUCKETS_SIZE; i++)
-	{
-		pItem = m_HandleBuckets[i];
-		while (pItem != nullptr)
-		{
-			pNextItem = pItem->Next;
-			delete(pItem);
-			pItem = pNextItem;
-		}
-		m_HandleBuckets[i] = nullptr;
-	}
-	m_iHashHandleCount = 0;
-}
-
-PPHashPortItem CIOCPServerSocketManager :: FindPortItemPointer(const int iKey)
-{
-	int iHash = iKey % MAX_HASH_BUCKETS_SIZE;
-	PPHashPortItem point = &m_HandleBuckets[iHash];
-	while (*point != nullptr)
-	{
-		if (iKey == (*point)->iHandle)
-			break;
-		else
-			point = &((*point)->Next);
-	}
-	return point;
-}
 
 /************************End Of CIOCPServerSocketManager********************************************/
