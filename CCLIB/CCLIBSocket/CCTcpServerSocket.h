@@ -51,7 +51,7 @@ private:
 	std::string m_sRemoteAddress;
 	int m_iRemotePort;
 	unsigned short m_SocketHandle;      // 对应CIOCPServerSocketManager::m_HandleBuckets的handle值
-	PSendBufferNode m_First, m_Last;
+	TSendBufferLinkedList m_SendList;   // 发送缓冲列表
 	bool m_bSending;
 	bool m_bSafeClose;
 	TBlock m_SendBlock;

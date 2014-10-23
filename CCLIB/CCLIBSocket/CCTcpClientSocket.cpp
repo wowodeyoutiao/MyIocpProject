@@ -300,11 +300,12 @@ bool CNetworkEventClientSocketManager :: DoInitialize()
 /************************Start Of CIOCPClientSocketManager******************************************/
 CIOCPClientSocketManager::CIOCPClientSocketManager() : m_OnRead(nullptr), m_OnError(nullptr), m_OnConnect(nullptr), m_OnDisConnect(nullptr),
 	m_LocalAddress(""), m_Address(""), m_Port(), m_TotalBufferlen(0), m_BoActive(false), m_BoConnected(false), m_Sending(false),
-	m_hIOCP(0), m_CSocket(INVALID_SOCKET), m_RecvLock(0), m_SendLock(0), m_First(nullptr), m_Last(nullptr), m_Reconnect_Interval(10*1000)
+	m_hIOCP(0), m_CSocket(INVALID_SOCKET), m_RecvLock(0), m_SendLock(0), m_Reconnect_Interval(10*1000)
 {
 	memset(&m_SendBlock, 0, sizeof(m_SendBlock));
 	memset(&m_RecvBlock, 0, sizeof(m_RecvBlock));
 	memset(&m_SocketAddr, 0, sizeof(m_SocketAddr));
+	m_SendList.DoInitial(MAX_CACHE_SIZE);
 }
 
 CIOCPClientSocketManager :: ~CIOCPClientSocketManager()
@@ -318,39 +319,15 @@ CIOCPClientSocketManager :: ~CIOCPClientSocketManager()
 	}
 }
 
-int CIOCPClientSocketManager :: SendBuf(const char* pBuf, int Count)
+int CIOCPClientSocketManager :: SendBuf(const char* pBuf, int iCount)
 {
 	unsigned int sendLen = 0;
-	if ((Count > 0) && (m_TotalBufferlen < MAX_CLIENT_SEND_BUFFER_SIZE))
+	if ((iCount > 0) && (m_TotalBufferlen < MAX_CLIENT_SEND_BUFFER_SIZE))
 	{
 		std::lock_guard<std::mutex> guard(m_LockCS); 
-		sendLen = Count;
-		m_TotalBufferlen += Count;
-		if ((m_Last != nullptr) && ((m_Last->nBufLen + Count) <= MAX_CACHE_SIZE))
-		{
-			memcpy(m_Last->szBuf, pBuf, Count);
-			m_Last->nBufLen += Count;
-		}
-		else
-		{
-			int AllocLen = 0;
-			PSendBufferNode nNode = new TSendBufferNode();
-			nNode->Next = nullptr;
-			nNode->nStart = 0;
-			if (Count < MAX_CACHE_SIZE)
-				AllocLen = MAX_CACHE_SIZE;
-			else
-				AllocLen = Count;
-			nNode->szBuf = (char*)malloc(AllocLen);
-			memcpy(nNode->szBuf, pBuf, Count);
-			nNode->nBufLen = Count;
-
-			if (m_Last != nullptr)
-				m_Last->Next = nNode;
-			else 
-				m_First = nNode;
-			m_Last = nNode;		
-		}
+		sendLen = iCount;
+		m_TotalBufferlen += iCount;
+		m_SendList.AddBufferToList(pBuf, iCount);
 		if (m_BoConnected && (!m_Sending))
 			PrepareSend(0, 0);
 	}
@@ -597,61 +574,28 @@ void CIOCPClientSocketManager :: DoClose()
 void CIOCPClientSocketManager :: Clear()
 {
 	std::lock_guard<std::mutex> guard(m_LockCS); 
-	PSendBufferNode pNode;
-	while (m_First != nullptr)
-	{
-		pNode = m_First;
-		m_First = pNode->Next;
-		free(pNode->szBuf);
-		delete pNode;
-	}
-	m_Last = nullptr;
+	m_SendList.DoFinalize();
 }
 
-void CIOCPClientSocketManager :: PrepareSend(int untreated, int Transfered)
+void CIOCPClientSocketManager :: PrepareSend(int iUntreated, int iTransfered)
 {
 	std::lock_guard<std::mutex> guard(m_LockCS);
-	m_TotalBufferlen -= Transfered;
+	m_TotalBufferlen -= iTransfered;
 	if (m_TotalBufferlen < 0)
 		m_TotalBufferlen = 0;
 	if (m_CSocket != INVALID_SOCKET)
 	{
-		PSendBufferNode nNode;
-		while (m_First != nullptr)
-		{
-			nNode = m_First;			
-			int iRemainLen = MAX_IOCP_BUFFER_SIZE - untreated;  // Buffer 中剩余的长度 
-			int iDataLen = nNode->nBufLen - nNode->nStart;      // 节点的数据长度
-			if (iDataLen > iRemainLen)
-			{
-				//一次不能发完
-				memcpy(&(m_SendBlock.Buffer[untreated]), &(nNode->szBuf[nNode->nStart]), iRemainLen);
-				untreated = MAX_IOCP_BUFFER_SIZE;
-				nNode->nStart += iRemainLen;
-				break;
-			}
-			else
-			{
-				//可以发送完
-				memcpy(&(m_SendBlock.Buffer[untreated]), &(nNode->szBuf[nNode->nStart]), iDataLen);
-				untreated += iDataLen;
-				m_First = nNode->Next;
-				if (m_First == nullptr)
-					m_Last = nullptr;
-				free(nNode->szBuf);
-				delete nNode;
-			}
-		}
+		iUntreated = m_SendList.GetBufferFromList(m_SendBlock.Buffer, MAX_IOCP_BUFFER_SIZE, iUntreated);
 
 		m_Sending = false;
-		if (untreated > 0)
+		if (iUntreated > 0)
 		{
 			//用户buffer转移到系统buffer中 
 			m_SendBlock.Event = soWrite;
-			m_SendBlock.wsaBuffer.len = untreated;
+			m_SendBlock.wsaBuffer.len = iUntreated;
 			m_SendBlock.wsaBuffer.buf = m_SendBlock.Buffer;
 			memset((char*)&m_SendBlock.Overlapped, 0, sizeof(m_SendBlock.Overlapped));
-			if (WSASend(m_CSocket, &m_SendBlock.wsaBuffer, 1, (LPDWORD)&Transfered, 0, &m_SendBlock.Overlapped, nullptr) == SOCKET_ERROR)
+			if (WSASend(m_CSocket, &m_SendBlock.wsaBuffer, 1, (LPDWORD)&iTransfered, 0, &m_SendBlock.Overlapped, nullptr) == SOCKET_ERROR)
 			{
 				/*
 				原来的样子？？？这个应该不对，DoError失败的话，m_Sending 也还是false;

@@ -9,9 +9,9 @@ void _TSimpleHash::DoInitial(int iSize)
 {
 	m_iBucketSize = iSize;
 	m_iHashItemCount = 0;
-	m_ItemBuckets = new PHashPortItem[m_iBucketSize];
+	m_ppItemBuckets = new PHashPortItem[m_iBucketSize];
 	for (int i = 0; i < m_iBucketSize; i++)
-		m_ItemBuckets[i] = nullptr;
+		m_ppItemBuckets[i] = nullptr;
 }
 
 void _TSimpleHash::AddPortItem(const int iKey, void* pClient)
@@ -20,8 +20,8 @@ void _TSimpleHash::AddPortItem(const int iKey, void* pClient)
 	PHashPortItem pItem = new THashPortItem;
 	pItem->iHandle = iKey;
 	pItem->pItem = pClient;
-	pItem->Next = m_ItemBuckets[iHash];
-	m_ItemBuckets[iHash] = pItem;
+	pItem->Next = m_ppItemBuckets[iHash];
+	m_ppItemBuckets[iHash] = pItem;
 	++m_iHashItemCount;
 }
 
@@ -44,28 +44,32 @@ void _TSimpleHash::ClearAllPortItems()
 
 	for (int i = 0; i<m_iBucketSize; i++)
 	{
-		pItem = m_ItemBuckets[i];
+		pItem = m_ppItemBuckets[i];
 		while (pItem != nullptr)
 		{
 			pNextItem = pItem->Next;
 			delete(pItem);
 			pItem = pNextItem;
 		}
-		m_ItemBuckets[i] = nullptr;
+		m_ppItemBuckets[i] = nullptr;
 	}
 	m_iHashItemCount = 0;
 }
 
 PPHashPortItem _TSimpleHash::FindPortItemPointer(const int iKey)
 {
+	PPHashPortItem point = nullptr;
 	int iHash = iKey % m_iBucketSize;
-	PPHashPortItem point = &m_ItemBuckets[iHash];
-	while (*point != nullptr)
+	if (m_ppItemBuckets[iHash] != nullptr)
 	{
-		if (iKey == (*point)->iHandle)
-			break;
-		else
-			point = &((*point)->Next);
+		point = &m_ppItemBuckets[iHash];
+		while (*point != nullptr)
+		{
+			if (iKey == (*point)->iHandle)
+				break;
+			else
+				point = &((*point)->Next);
+		}
 	}
 	return point;
 }

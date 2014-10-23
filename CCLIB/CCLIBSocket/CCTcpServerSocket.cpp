@@ -293,11 +293,12 @@ bool CMainIOCPWorker :: Start(const std::string& sIP, int iPort)
 /************************Start Of CClientConnector**************************************************/
 
 CClientConnector :: CClientConnector():m_Socket(INVALID_SOCKET), m_sRemoteAddress(""), m_iRemotePort(0), m_SocketHandle(0),
-	m_First(nullptr), m_Last(nullptr), m_bSending(false), m_bSafeClose(false), m_OnSocketError(nullptr), m_iTotalBufferLen(0), m_ulActiveTick(GetTickCount()),
+	m_bSending(false), m_bSafeClose(false), m_OnSocketError(nullptr), m_iTotalBufferLen(0), m_ulActiveTick(GetTickCount()),
 	m_ulLastSendTick(0), m_ulBufferFullTick(0)
 {
 	memset(&m_SendBlock, 0, sizeof(m_SendBlock));
 	memset(&m_RecvBlock, 0, sizeof(m_RecvBlock));
+	m_SendList.DoInitial(SEND_NODE_CACHE_SIZE);
 }
 
 CClientConnector :: ~CClientConnector()
@@ -327,37 +328,7 @@ int CClientConnector :: SendBuf(const char* pBuf, int iCount)
 		std::lock_guard<std::mutex> guard(m_LockCS); 
 		iSendLen = iCount;
 		m_iTotalBufferLen += iCount;
-		bool bSuccess = false;
-		if (m_Last != nullptr)
-		{
-			if (m_Last->nBufLen + iCount <= SEND_NODE_CACHE_SIZE)
-			{
-				memcpy(&(m_Last->szBuf[m_Last->nBufLen]), pBuf, iCount);
-				m_Last->nBufLen += iCount;
-				bSuccess = true;
-			}
-		}
-		//当前最后结点不能放下发送的数据，则创建新结点
-		if (!bSuccess)
-		{
-			int iAllocLen = 0;
-			PSendBufferNode pNode = new TSendBufferNode;
-			pNode->Next = nullptr;
-			pNode->nStart = 0;
-			if (iCount < SEND_NODE_CACHE_SIZE)
-				iAllocLen = SEND_NODE_CACHE_SIZE;
-			else
-				iAllocLen = iCount;
-			pNode->szBuf = (char*)malloc(iAllocLen);
-			memcpy(pNode->szBuf, pBuf, iCount);
-			pNode->nBufLen = iCount;
-
-			if (m_Last != nullptr)
-				m_Last->Next = pNode;
-			else
-				m_First = pNode;
-			m_Last = pNode;
-		}
+		m_SendList.AddBufferToList(pBuf, iCount);
 	}
 	return iSendLen;
 }
@@ -384,15 +355,7 @@ void CClientConnector :: UpdateActive()
 void CClientConnector :: Clear()
 {
 	std::lock_guard<std::mutex> guard(m_LockCS);
-	PSendBufferNode pNode;
-	while (m_First != nullptr)
-	{
-		pNode = m_First;
-		m_First = pNode->Next;
-		free(pNode->szBuf);
-		delete(pNode);
-	}
-	m_Last = nullptr;
+	m_SendList.DoFinalize();
 }
 
 void CClientConnector :: PrepareSend(int iUntreated, int iTransfered)
@@ -403,35 +366,7 @@ void CClientConnector :: PrepareSend(int iUntreated, int iTransfered)
 	m_iTotalBufferLen -= iTransfered;
 	if (m_iTotalBufferLen < 0)
 		m_iTotalBufferLen = 0;
-	PSendBufferNode pNode = nullptr;
-	int iRemainLen = 0;
-	//从队列中取等待发送的数据
-	while (m_First != nullptr)
-	{
-		pNode = m_First;
-		//当前用于发送的m_SendBlob中buffer中剩余的长度
-		iRemainLen = MAX_IOCP_BUFFER_SIZE - iUntreated;  
-		//该结点中要发送的数据长度
-		int iDataLen = pNode->nBufLen - pNode->nStart;
-		if (iDataLen > iRemainLen)
-		{
-			//数据不能一次发送完毕
-			memcpy(&m_SendBlock.Buffer[iUntreated], &pNode->szBuf[pNode->nStart], iRemainLen);
-			iUntreated = MAX_IOCP_BUFFER_SIZE;
-			pNode->nStart += iRemainLen;
-			break;
-		}
-		else
-		{
-			memcpy(&m_SendBlock.Buffer[iUntreated], &pNode->szBuf[pNode->nStart], iDataLen);
-			iUntreated += iDataLen;
-			m_First = pNode->Next;
-			if (nullptr == m_First)
-				m_Last = nullptr;
-			free(pNode->szBuf);
-			delete(pNode);
-		}
-	}
+	iUntreated = m_SendList.GetBufferFromList(m_SendBlock.Buffer, MAX_IOCP_BUFFER_SIZE, iUntreated);
 
 	m_bSending = false;
 	if (iUntreated > 0)
@@ -533,7 +468,7 @@ bool CClientConnector :: IocpReadback(int iTransfered)
 
 void CClientConnector :: DoActive(unsigned long ulTick)
 {
-	if ((m_bSafeClose) && (!m_bSending) && (m_First == nullptr))
+	if ((m_bSafeClose) && (!m_bSending) && (m_SendList.IsEmpty()))
 	{
 		Close();
 		return;

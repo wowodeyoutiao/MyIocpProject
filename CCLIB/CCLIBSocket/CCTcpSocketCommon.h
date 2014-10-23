@@ -36,6 +36,23 @@ typedef struct _TSendBufferNode
 	_TSendBufferNode* Next;  // 下个节点指针 
 }TSendBufferNode, *PSendBufferNode;
 
+/**
+* 发送节点组成的链表
+*/
+typedef struct _TSendBufferLinkedList
+{
+public:
+	void DoInitial(const int iSize);
+	void DoFinalize();
+	inline bool IsEmpty(){ return nullptr == m_pFirst; };
+	void AddBufferToList(const char* pBuf, int iCount);
+	int GetBufferFromList(char* pDesBuf, int iBufMaxSize, int iBufUntreatedBytes);
+private:
+	PSendBufferNode m_pFirst;   //链表头节点
+	PSendBufferNode m_pLast;    //链表尾节点
+	int m_iNodeCacheSize;       //节点的存储大小
+}TSendBufferLinkedList;
+
 //报错的枚举类型
 enum TSocketErrorType {seConnect, seRead, seSend, seClose};
 
@@ -76,7 +93,7 @@ void SendDebugString(const std::string& sInfo);
 class CExecutableBase
 {
 public:
-	CExecutableBase() : m_BoTerminated(false), m_pThread(nullptr)
+	CExecutableBase() : m_bTerminated(false), m_pThread(nullptr)
 	{
 		m_Event = CreateEvent(nullptr, false, false, nullptr);
 	}
@@ -99,12 +116,12 @@ public:
 	virtual void Execute() = 0;
 	std::thread* m_pThread;          // 内部执行线程指针
 protected:
-	void Terminate() { m_BoTerminated = true; }
-	bool IsTerminated(){ return m_BoTerminated;}
+	void Terminate() { m_bTerminated = true; }
+	bool IsTerminated(){ return m_bTerminated;}
 protected:
 	HANDLE m_Event;                  // 网络事件句柄
 private:
-	bool m_BoTerminated;             // 停止Execute方法的循环执行标记
+	bool m_bTerminated;             // 停止Execute方法的循环执行标记
 };
 
 #endif //__CC_TCP_SOCKET_COMMON_H__

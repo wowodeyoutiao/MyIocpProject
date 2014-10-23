@@ -26,7 +26,7 @@ public:
 	PPHashPortItem FindPortItemPointer(const int iKey);     //这里需要返回的是PortItem的指针
 	int GetItemCount();
 private:
-	PPHashPortItem m_ItemBuckets;							//用于存储客户端对象的简易hash
+	PPHashPortItem m_ppItemBuckets;							//用于存储客户端对象的简易hash
 	int m_iBucketSize;                                      //固定的数组长度
 	int m_iHashItemCount;  				     			    //当前连接中的客户端句柄数量
 }TSimpleHash, *PSimpleHash;

@@ -92,7 +92,7 @@ private:
 	void DoQueued();
 	void DoClose();
 	void Clear();
-	void PrepareSend(int untreated, int Transfered);
+	void PrepareSend(int iUntreated, int iTransfered);
 	bool PrepareRecv();
 	void IocpSendback(int Transfered);
 	bool IocpReadback(int Transfered);
@@ -105,7 +105,7 @@ private:
 	std::mutex m_LockCS;                // 队列操作使用的互斥锁
 	unsigned long m_SendLock;			// 接收自旋锁 变量 （暂未使用）
 	unsigned long m_RecvLock;           // 发送自旋锁 变量 （暂未使用）
-    PSendBufferNode m_First, m_Last;    // 发送缓冲区链表
+	TSendBufferLinkedList m_SendList;   // 发送缓冲区链表
 	TBlock m_SendBlock;                 // 用于发送的
 	TBlock m_RecvBlock;                 // 用于接收的
     SOCKADDR_IN m_SocketAddr;			// 
