@@ -10,14 +10,14 @@
 
 /**
 *  
-* 客户端的Socket管理器，用单线程网络事件模型实现
+* 客户端的Socket管理器，用单线程网络事件模型实现 ---- 注：这个模型的实现还需要更多的调整！！！！
 *
 */
 class CNetworkEventClientSocketManager
 {
 public:
-    CNetworkEventClientSocketManager():m_CSocket(INVALID_SOCKET){};
-	virtual ~CNetworkEventClientSocketManager(){ Close(); };
+    CNetworkEventClientSocketManager();
+	virtual ~CNetworkEventClientSocketManager();
     unsigned int SendBuf(const char* pBuf, unsigned int Len, bool BoFree = false);
     bool Open();
     bool Close();
@@ -41,7 +41,6 @@ private:
 private:
 	SOCKET m_CSocket;                   // 原始套接字
 	HANDLE m_Event;                     // 网络事件句柄
-
     std::mutex m_SendCS;                // 发送队列使用的互斥锁
     PSendBufferNode m_First, m_Last;    // 发送缓冲区链表
     int m_Count;                        // 发送队列的个数

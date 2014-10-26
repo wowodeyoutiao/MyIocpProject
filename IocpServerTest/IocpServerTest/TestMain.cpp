@@ -21,10 +21,12 @@ int _tmain(int argc, _TCHAR* argv[])
 			sampleServer.m_iListenPort = 7001;
 			sampleServer.Open();
 
-			HANDLE m_Event = CreateEvent(nullptr, false, false, nullptr);
+			HANDLE m_TempEvent = CreateEvent(nullptr, false, false, nullptr);
+			int icount = 0;
 			while (true)
 			{
-				WaitForSingleObject(m_Event, 100);
+				WaitForSingleObject(m_TempEvent, 100);
+				icount += 1;
 			}
 		}
 	}

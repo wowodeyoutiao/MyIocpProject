@@ -79,9 +79,9 @@ public:
     void ShutDown();
 private:			
 	//noncopy对象
-	CSubIOCPWorker(){}
-	CSubIOCPWorker(CSubIOCPWorker& rhs){}
-	CSubIOCPWorker& operator=(const CSubIOCPWorker& worker){}
+	CSubIOCPWorker();
+	CSubIOCPWorker(CSubIOCPWorker& rhs);
+	CSubIOCPWorker& operator=(const CSubIOCPWorker& worker);
 private:
 	PHANDLE m_pHIOCP;
     TNotifyEvent m_OnSocketClose;
@@ -105,9 +105,9 @@ private:
     bool Start(const std::string& sIP, int iPort);
     
 	//noncopy对象
-	CMainIOCPWorker(){}
-	CMainIOCPWorker(CMainIOCPWorker& rhs){}
-	CMainIOCPWorker& operator=(const CMainIOCPWorker& worker){}
+	CMainIOCPWorker();
+	CMainIOCPWorker(CMainIOCPWorker& rhs);
+	CMainIOCPWorker& operator=(const CMainIOCPWorker& worker);
 private:
 	TOnSocketError m_OnSocketError;
 	TNotifyEvent m_OnSocketClose;

@@ -30,6 +30,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		{
 			pClientThreads[i] = new std::thread(DoRunThread);
 		}
+
 		HANDLE m_Event = CreateEvent(nullptr, false, false, nullptr);
 		while (true)
 		{

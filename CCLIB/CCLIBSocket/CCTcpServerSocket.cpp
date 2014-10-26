@@ -126,8 +126,7 @@ CMainIOCPWorker :: ~CMainIOCPWorker()
 	if (!IsTerminated())
 	{
 		Terminate();
-		SetEvent(m_Event);
-		WaitForSingleObject(m_Event, INFINITE);
+		WaitThreadExecute();
 		if (m_Socket != INVALID_SOCKET)
 		{
 			closesocket(m_Socket);
@@ -209,7 +208,8 @@ void CMainIOCPWorker :: MakeWorkers()
 	SYSTEM_INFO si;
 	GetSystemInfo(&si);
 	m_iSubThreadCount = si.dwNumberOfProcessors * 2 + 1;
-	m_SubWorkers = (CSubIOCPWorker**)malloc(sizeof(CSubIOCPWorker*) * m_iSubThreadCount);
+	//m_SubWorkers = (CSubIOCPWorker**)malloc(sizeof(CSubIOCPWorker*) * m_iSubThreadCount);
+	m_SubWorkers = new CSubIOCPWorker*[m_iSubThreadCount];
 	for (int i=0; i<m_iSubThreadCount; i++)
 	{
 		m_SubWorkers[i] = new CSubIOCPWorker(&m_hIOCP, m_OnSocketClose);
@@ -231,10 +231,12 @@ void CMainIOCPWorker :: Close()
 	{
 		for (int i=m_iSubThreadCount-1; i>=0; i--)
 		{
-			m_SubWorkers[i]->ShutDown();
-			delete(m_SubWorkers[i]);
+			if (m_SubWorkers[i] != nullptr)
+			{
+				m_SubWorkers[i]->ShutDown();
+				delete m_SubWorkers[i];
+			}
 		}
-		free(m_SubWorkers);
 		m_SubWorkers = nullptr;
 	}
 
@@ -531,8 +533,7 @@ CIOCPServerSocketManager :: ~CIOCPServerSocketManager()
 	if (!IsTerminated())
 	{
 		Terminate();
-		SetEvent(m_Event);
-		WaitForSingleObject(m_Event, INFINITE);
+		WaitThreadExecute();
 	}
 	m_QueryClientHash.ClearAllPortItems();
 }
@@ -564,7 +565,7 @@ void CIOCPServerSocketManager :: Open()
 void CIOCPServerSocketManager :: Close()
 {
 	CClientConnector* client = nullptr;
-	void* pObject = m_MainWorker;
+	CMainIOCPWorker* pObject = m_MainWorker;
 	if (pObject == nullptr)
 		return;
 

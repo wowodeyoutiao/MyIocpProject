@@ -9,6 +9,15 @@ const int NETWORK_EVENT_RECEIVE_BUFFER_SIZE = 16 * 1024;					// 网络事件模型下的
 const int MAX_CACHE_SIZE    = 16 * 1024;							        // 每个节点的发送区大小
 
 /************************Start Of CNetworkEventClientSocketManager************************************/
+CNetworkEventClientSocketManager::CNetworkEventClientSocketManager():m_CSocket(INVALID_SOCKET)
+{
+}
+
+CNetworkEventClientSocketManager::~CNetworkEventClientSocketManager()
+{ 
+	Close(); 
+}
+
 unsigned int CNetworkEventClientSocketManager :: SendBuf(const char* pBuf, unsigned int Len, bool BoFree)
 {
 	unsigned int sendLen = 0;
@@ -314,8 +323,7 @@ CIOCPClientSocketManager :: ~CIOCPClientSocketManager()
 	{
 		Terminate();
 		DoClose();
-		SetEvent(m_Event);
-		WaitForSingleObject(m_Event, INFINITE);
+		WaitThreadExecute();		
 	}
 }
 
@@ -512,7 +520,7 @@ void CIOCPClientSocketManager :: DoQueued()
 	PBlock PRBlock = nullptr;
 	unsigned int dwBytesXfered = 0;
 	unsigned int dwCompletionKey = 0;
-	bool retflag = (GetQueuedCompletionStatus(m_hIOCP, (LPDWORD)&dwBytesXfered, (LPDWORD)&dwCompletionKey, (LPOVERLAPPED*)PRBlock, INFINITE) > 0);
+	bool retflag = (GetQueuedCompletionStatus(m_hIOCP, (LPDWORD)&dwBytesXfered, (LPDWORD)&dwCompletionKey, (LPOVERLAPPED*)&PRBlock, INFINITE) > 0);
 
 	if ((IsTerminated()) || ((unsigned int)PRBlock == SHUTDOWN_FLAG))
 		return;

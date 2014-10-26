@@ -114,3 +114,36 @@ int _TSendBufferLinkedList::GetBufferFromList(char* pDesBuf, int iBufMaxSize, in
 }
 
 /************************End Of _TSendBufferLinkedList****************************************************/
+
+
+
+/************************Start Of CExecutableBase*********************************************************/
+CExecutableBase::CExecutableBase():m_bTerminated(false), m_pThread(nullptr)
+{
+	m_Event = CreateEvent(nullptr, false, false, nullptr);
+}
+
+CExecutableBase::~CExecutableBase()
+{
+	if (!IsTerminated())
+	{
+		Terminate();
+		SetEvent(m_Event);
+		WaitForSingleObject(m_Event, INFINITE);
+		m_pThread = nullptr;
+	}
+	CloseHandle(m_Event);
+}
+
+void CExecutableBase::InitialWorkThread()
+{
+	if (nullptr == m_pThread)
+		m_pThread = new std::thread(&CExecutableBase::Execute, this);
+}
+
+void CExecutableBase::WaitThreadExecute()
+{
+	if ((m_pThread != nullptr) && m_pThread->joinable())
+		m_pThread->join();
+}
+/************************End Of CExecutableBase***********************************************************/

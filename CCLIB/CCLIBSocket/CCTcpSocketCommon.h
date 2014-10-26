@@ -93,26 +93,10 @@ void SendDebugString(const std::string& sInfo);
 class CExecutableBase
 {
 public:
-	CExecutableBase() : m_bTerminated(false), m_pThread(nullptr)
-	{
-		m_Event = CreateEvent(nullptr, false, false, nullptr);
-	}
-	virtual ~CExecutableBase()
-	{
-		if (nullptr != m_pThread)
-		{
-			Terminate();
-			SetEvent(m_Event);
-			WaitForSingleObject(m_Event, INFINITE);
-			delete m_pThread;
-		}
-		CloseHandle(m_Event);
-	}
-	void InitialWorkThread()
-	{
-		if (nullptr == m_pThread)
-			m_pThread = new std::thread(&CExecutableBase::Execute, this);
-	}
+	CExecutableBase();
+	virtual ~CExecutableBase();
+	void InitialWorkThread();
+	void WaitThreadExecute();
 	virtual void Execute() = 0;
 	std::thread* m_pThread;          // 内部执行线程指针
 protected:
