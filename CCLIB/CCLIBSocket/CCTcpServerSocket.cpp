@@ -37,9 +37,10 @@ void CSubIOCPWorker :: Execute()
 				2.如果 *lpOverlapped为空并且函数没有从完成端口取出完成包，返回值则为0。函数则不会在lpNumberOfBytes and lpCompletionKey所指向的参数中存储信息。
 				3.如果 *lpOverlapped不为空并且函数从完成端口出列一个失败I/O操作的完成包，返回值为0。函数在指向lpNumberOfBytesTransferred, lpCompletionKey, and lpOverlapped的参数指针中存储相关信息。
 				*/
-				if ((0 == Ret) && (ulBytesTansfered > 0))
+				if ((0 == Ret) || (ulBytesTansfered == 0))
 				{
-					//这里在第三种情况下，关闭socket
+					//因为key!=NULL  所以不会是第二个情况
+					//这里主要处理第三种情况，关闭socket
 					if (nullptr != m_OnSocketClose)
 						m_OnSocketClose((void*)key);
 					continue;
