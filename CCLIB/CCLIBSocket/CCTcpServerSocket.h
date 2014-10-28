@@ -73,8 +73,8 @@ friend class CIOCPServerSocketManager;
 class CSubIOCPWorker : public CExecutableBase
 {
 public:
-	CSubIOCPWorker(PHANDLE ph, TNotifyEvent evt) : m_pHIOCP(ph), m_OnSocketClose(evt){}
-	~CSubIOCPWorker(){}
+	CSubIOCPWorker(PHANDLE ph, TNotifyEvent evt);
+	~CSubIOCPWorker();
 	void Execute();					
     void ShutDown();
 private:			

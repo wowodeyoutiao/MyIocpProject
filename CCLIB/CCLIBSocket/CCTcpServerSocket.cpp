@@ -12,6 +12,17 @@ const unsigned long MAX_BLOCK_CONTINUE_TIME = 10000;        // 网络阻塞持续时间
 const unsigned long SEND_NODE_CACHE_SIZE = 16 * 1024;      // 每个节点的发送区大小
 
 /************************Start Of CSubIOCPWorker****************************************************/
+CSubIOCPWorker::CSubIOCPWorker(PHANDLE ph, TNotifyEvent evt) : m_pHIOCP(ph), m_OnSocketClose(evt)
+{}
+
+CSubIOCPWorker::~CSubIOCPWorker()
+{
+	if (!IsTerminated())
+	{
+		Terminate();
+		WaitThreadExecute();
+	}
+}
 
 void CSubIOCPWorker :: Execute()
 {
@@ -127,12 +138,12 @@ CMainIOCPWorker :: ~CMainIOCPWorker()
 	if (!IsTerminated())
 	{
 		Terminate();
-		WaitThreadExecute();
 		if (m_Socket != INVALID_SOCKET)
 		{
 			closesocket(m_Socket);
 			m_Socket = INVALID_SOCKET;
 		}
+		WaitThreadExecute();
 	}
 }
 
@@ -209,7 +220,6 @@ void CMainIOCPWorker :: MakeWorkers()
 	SYSTEM_INFO si;
 	GetSystemInfo(&si);
 	m_iSubThreadCount = si.dwNumberOfProcessors * 2 + 1;
-	//m_SubWorkers = (CSubIOCPWorker**)malloc(sizeof(CSubIOCPWorker*) * m_iSubThreadCount);
 	m_SubWorkers = new CSubIOCPWorker*[m_iSubThreadCount];
 	for (int i=0; i<m_iSubThreadCount; i++)
 	{
