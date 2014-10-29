@@ -74,7 +74,7 @@ public:
 	bool IsActive(){ return m_BoActive; }
 	bool IsConnected(){ return m_BoConnected; }
 	void SetReconnectInterval(unsigned long interval){ m_Reconnect_Interval = interval; }
-    void Execute();						//子类不重载此方法
+    void DoExecute();						//子类不重载此方法
 public:
     TOnSocketRead m_OnRead;
 	TOnSocketError m_OnError;

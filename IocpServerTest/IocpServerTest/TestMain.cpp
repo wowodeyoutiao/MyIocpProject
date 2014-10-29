@@ -23,7 +23,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
 			HANDLE m_TempEvent = CreateEvent(nullptr, false, false, nullptr);
 			int icount = 0;
-			while (icount < 100)
+			while (true)
 			{
 				WaitForSingleObject(m_TempEvent, 100);
 				icount += 1;

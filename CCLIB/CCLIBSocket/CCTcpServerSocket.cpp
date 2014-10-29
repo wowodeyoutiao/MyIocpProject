@@ -3,6 +3,7 @@
 @content:
 **************************************************************************************/
 #include "CCTcpServerSocket.h"
+#include "stdlib.h"
 #pragma comment(lib, "ws2_32.lib")
 
 const int DEFAULT_CLIENT_CORPSE_TIME = 20 * 60 * 1000;      // 默认服务器与客户端无通信后断线时间
@@ -12,19 +13,17 @@ const unsigned long MAX_BLOCK_CONTINUE_TIME = 10000;        // 网络阻塞持续时间
 const unsigned long SEND_NODE_CACHE_SIZE = 16 * 1024;      // 每个节点的发送区大小
 
 /************************Start Of CSubIOCPWorker****************************************************/
-CSubIOCPWorker::CSubIOCPWorker(PHANDLE ph, TNotifyEvent evt) : m_pHIOCP(ph), m_OnSocketClose(evt)
-{}
+CSubIOCPWorker::CSubIOCPWorker(PHANDLE ph, TNotifyEvent evt, std::string& sName) : m_pHIOCP(ph), m_OnSocketClose(evt)
+{
+	m_sThreadName = sName;
+}
 
 CSubIOCPWorker::~CSubIOCPWorker()
 {
-	if (!IsTerminated())
-	{
-		Terminate();
-		WaitThreadExecute();
-	}
+	WaitThreadExecuteOver();
 }
 
-void CSubIOCPWorker :: Execute()
+void CSubIOCPWorker :: DoExecute()
 {
 	SetThreadLocale(0X804);
 	while (!IsTerminated())
@@ -37,7 +36,10 @@ void CSubIOCPWorker :: Execute()
 			int Ret = GetQueuedCompletionStatus(*m_pHIOCP, &ulBytesTansfered, &key, (LPOVERLAPPED*)&pRBlock, INFINITE);
 			//PostQueuedCompletionStatus发送的关闭消息
 			if (SHUTDOWN_FLAG == (unsigned long)(pRBlock))
+			{
+				SendDebugString(m_sThreadName + ":receive SHUTDOWN_FLAG");
 				break;
+			}
 
 			if (NULL != key)
 			{
@@ -91,6 +93,7 @@ void CSubIOCPWorker :: ShutDown()
 {
 	m_OnSocketClose = nullptr;
 	PostQueuedCompletionStatus(*m_pHIOCP, 0, 0, (LPOVERLAPPED)SHUTDOWN_FLAG);
+	SendDebugString(m_sThreadName + ":send SHUTDOWN_FLAG");
 }
 
 /************************End Of CSubIOCPWorker******************************************************/
@@ -135,19 +138,16 @@ m_OnSocketAccept(nullptr), m_Parent(parent), m_hIOCP(0), m_Socket(INVALID_SOCKET
 
 CMainIOCPWorker :: ~CMainIOCPWorker()
 {
-	if (!IsTerminated())
+	//先关闭端口，才能让保证WSAAccept返回
+	if (m_Socket != INVALID_SOCKET)
 	{
-		Terminate();
-		if (m_Socket != INVALID_SOCKET)
-		{
-			closesocket(m_Socket);
-			m_Socket = INVALID_SOCKET;
-		}
-		WaitThreadExecute();
+		closesocket(m_Socket);
+		m_Socket = INVALID_SOCKET;
 	}
+	WaitThreadExecuteOver();
 }
 
-void CMainIOCPWorker :: Execute()
+void CMainIOCPWorker :: DoExecute()
 {
 	SetThreadLocale(0X804);
 	//listen的第二个参数是等待连接队列的最大长度，默认值一般是5，在windows下最大可以设置到200（或者更高，根据不同版本而定）
@@ -221,9 +221,13 @@ void CMainIOCPWorker :: MakeWorkers()
 	GetSystemInfo(&si);
 	m_iSubThreadCount = si.dwNumberOfProcessors * 2 + 1;
 	m_SubWorkers = new CSubIOCPWorker*[m_iSubThreadCount];
+	std::string temps;
+	char cc[20];
 	for (int i=0; i<m_iSubThreadCount; i++)
 	{
-		m_SubWorkers[i] = new CSubIOCPWorker(&m_hIOCP, m_OnSocketClose);
+		_itoa_s(i, cc, 10);
+		temps.assign(cc);
+		m_SubWorkers[i] = new CSubIOCPWorker(&m_hIOCP, m_OnSocketClose, temps);
 		m_SubWorkers[i]->InitialWorkThread();
 	}
 	if (nullptr != m_OnReady)
@@ -240,13 +244,19 @@ void CMainIOCPWorker :: Close()
 
 	if (m_SubWorkers != nullptr)
 	{
+		//注：这里在关闭子线程的时候要先统一ShutDown，后释放CSubIOCPWorker对象指针
+		//在释放CSubIOCPWorker的时候是判断线程执行完毕或者等待m_Event信号量
+		//如果ShutDown的同时释放，则可能导致没有发送足够的SHUTDOWN_FLAG到完成端口，
+		//从而导致子线程还处于休眠状态
 		for (int i=m_iSubThreadCount-1; i>=0; i--)
 		{
 			if (m_SubWorkers[i] != nullptr)
-			{
 				m_SubWorkers[i]->ShutDown();
+		}
+		for (int i=m_iSubThreadCount-1; i>=0; i--)
+		{
+			if (m_SubWorkers[i] != nullptr)
 				delete m_SubWorkers[i];
-			}
 		}
 		m_SubWorkers = nullptr;
 	}
@@ -541,11 +551,7 @@ CIOCPServerSocketManager :: CIOCPServerSocketManager():m_sLocalIP(""), m_iListen
 
 CIOCPServerSocketManager :: ~CIOCPServerSocketManager()
 {
-	if (!IsTerminated())
-	{
-		Terminate();
-		WaitThreadExecute();
-	}
+	WaitThreadExecuteOver();
 	m_QueryClientHash.ClearAllPortItems();
 }
 
@@ -616,7 +622,7 @@ void CIOCPServerSocketManager :: Close()
 	m_OnCreateClient = funOldCreateClient;						//重新装载上m_OnCreateClient
 }
 
-void CIOCPServerSocketManager :: Execute()
+void CIOCPServerSocketManager :: DoExecute()
 {
 	SetThreadLocale(0X804);
 	unsigned long ulDelayTick = 0;

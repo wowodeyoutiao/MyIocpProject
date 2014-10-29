@@ -96,16 +96,19 @@ public:
 	CExecutableBase();
 	virtual ~CExecutableBase();
 	void InitialWorkThread();
-	void WaitThreadExecute();
-	virtual void Execute() = 0;
+	void Execute();
+	virtual void DoExecute() = 0;
 	std::thread* m_pThread;          // 内部执行线程指针
 protected:
-	void Terminate() { m_bTerminated = true; }
-	bool IsTerminated(){ return m_bTerminated;}
+	void WaitThreadExecuteOver();
+	void Terminate();
+	bool IsTerminated();
 protected:
 	HANDLE m_Event;                  // 网络事件句柄
+	std::string m_sThreadName;       // 线程名称
 private:
-	bool m_bTerminated;             // 停止Execute方法的循环执行标记
+	bool m_bTerminated;              // 停止Execute方法的循环执行标记
+	bool m_bExecuteOver;             // Execute执行完毕
 };
 
 #endif //__CC_TCP_SOCKET_COMMON_H__

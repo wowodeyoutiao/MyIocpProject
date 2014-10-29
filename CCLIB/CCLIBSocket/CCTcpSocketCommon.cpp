@@ -118,32 +118,60 @@ int _TSendBufferLinkedList::GetBufferFromList(char* pDesBuf, int iBufMaxSize, in
 
 
 /************************Start Of CExecutableBase*********************************************************/
-CExecutableBase::CExecutableBase():m_bTerminated(false), m_pThread(nullptr)
+CExecutableBase::CExecutableBase() :m_bTerminated(false), m_pThread(nullptr), m_bExecuteOver(false), m_sThreadName("NoName")
 {
 	m_Event = CreateEvent(nullptr, false, false, nullptr);
 }
 
 CExecutableBase::~CExecutableBase()
 {
-	if (!IsTerminated())
-	{
-		Terminate();
-		SetEvent(m_Event);
-		WaitForSingleObject(m_Event, INFINITE);
-		m_pThread = nullptr;
-	}
 	CloseHandle(m_Event);
 }
 
 void CExecutableBase::InitialWorkThread()
 {
 	if (nullptr == m_pThread)
+	{
 		m_pThread = new std::thread(&CExecutableBase::Execute, this);
+		SendDebugString(m_sThreadName + ":new thread");
+	}
 }
 
-void CExecutableBase::WaitThreadExecute()
+void CExecutableBase::WaitThreadExecuteOver()
 {
-	if ((m_pThread != nullptr) && m_pThread->joinable())
-		m_pThread->join();
+	if (!IsTerminated())
+	{
+		Terminate();
+		if (!m_bExecuteOver)
+		{
+			SendDebugString(m_sThreadName + ":before wait");
+			WaitForSingleObject(m_Event, INFINITE);
+			SendDebugString(m_sThreadName + ":after wait");
+		}
+		else
+		{
+			SendDebugString(m_sThreadName + ":no join");
+		}
+		m_pThread = nullptr;
+	}
+}
+
+void CExecutableBase::Execute()
+{
+	DoExecute();
+	m_bExecuteOver = true;
+	SetEvent(m_Event);
+	SendDebugString(m_sThreadName + ":Execute Over");
+}
+
+void CExecutableBase::Terminate()
+{ 
+	m_bTerminated = true; 
+	SendDebugString(m_sThreadName + ":Terminate");
+}
+
+bool CExecutableBase::IsTerminated()
+{ 
+	return m_bTerminated; 
 }
 /************************End Of CExecutableBase***********************************************************/

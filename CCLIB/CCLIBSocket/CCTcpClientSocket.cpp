@@ -319,12 +319,8 @@ CIOCPClientSocketManager::CIOCPClientSocketManager() : m_OnRead(nullptr), m_OnEr
 
 CIOCPClientSocketManager :: ~CIOCPClientSocketManager()
 {
-	if (!IsTerminated())
-	{
-		Terminate();
-		DoClose();
-		WaitThreadExecute();		
-	}
+	DoClose();
+	WaitThreadExecuteOver();
 }
 
 int CIOCPClientSocketManager :: SendBuf(const char* pBuf, int iCount)
@@ -400,7 +396,7 @@ void CIOCPClientSocketManager :: Close(bool BoClearBuffer)
 		Clear();
 }
 
-void CIOCPClientSocketManager :: Execute()
+void CIOCPClientSocketManager :: DoExecute()
 {
 	SetThreadLocale(0X804);
 	unsigned int LastconnectTick = 0;

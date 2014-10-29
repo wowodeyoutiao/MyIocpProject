@@ -73,9 +73,9 @@ friend class CIOCPServerSocketManager;
 class CSubIOCPWorker : public CExecutableBase
 {
 public:
-	CSubIOCPWorker(PHANDLE ph, TNotifyEvent evt);
+	CSubIOCPWorker(PHANDLE ph, TNotifyEvent evt, std::string& sName);
 	~CSubIOCPWorker();
-	void Execute();					
+	void DoExecute();					
     void ShutDown();
 private:			
 	//noncopy对象
@@ -98,7 +98,7 @@ class CMainIOCPWorker : public CExecutableBase
 public:
 	CMainIOCPWorker(void* parent);
 	~CMainIOCPWorker();				
-	void Execute();					
+	void DoExecute();					
 private:
     void MakeWorkers();
     void Close();
@@ -135,7 +135,7 @@ public:
 	void Open();
 	void Close();
 	bool IsActive(){ return (m_MainWorker != nullptr); }
-    void Execute();							 //子类不重载此方法
+    void DoExecute();							 //子类不重载此方法
 	bool DoCheckConnect(const std::string& sRemoteAddress);
 public:
 	std::string m_sLocalIP;					 // 本地IP
