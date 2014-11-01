@@ -16,7 +16,7 @@ const unsigned long SHUTDOWN_FLAG = 0XFFFFFFFF;   // iocp端口关闭标志
 const int MAX_IOCP_BUFFER_SIZE = 8 * 1024;        // IOCP投递缓冲区大小，一般设置成8k性能较佳
 const int MAX_CLIENT_SEND_BUFFER_SIZE = MAX_IOCP_BUFFER_SIZE * 10 * 1024;  // 客户端可以发送的最大数据缓冲，也是服务器这端阻塞的最大客户端缓冲区  80M 
 
-//定义的回调函数
+//定义TcpSocket的回调函数
 typedef std::function<void (void* Sender)> TNotifyEvent;
 typedef std::function<void (void* Sender, const char* pBuf, int iBufLen)> TOnSocketRead;   
 typedef std::function<void (void* Sender, int& iErrorCode)> TOnSocketError;
@@ -24,6 +24,11 @@ typedef std::function<bool (const std::string& sIp)> TOnCheckAddress;
 typedef std::function<void (HANDLE hIocp, SOCKET hSocket, std::string& sRAddress, int iRPort)> TOnSocketAccept;
 class CClientConnector;
 typedef std::function<CClientConnector* (const std::string& sIP)> TOnCreateClient;
+
+//定义dll中回调函数类型
+typedef bool(*TServiceDllCallBackFunc)(void* Sender);
+//定义CCWindowsService.dll中启动服务的通用模块
+typedef void(__stdcall *TServiceManagerFunc)(char* ServiceName, char* ServiceDesc, TServiceDllCallBackFunc OnStartFunc, TServiceDllCallBackFunc OnStopFunc);
 
 /**
 * 发送缓冲节点结构
