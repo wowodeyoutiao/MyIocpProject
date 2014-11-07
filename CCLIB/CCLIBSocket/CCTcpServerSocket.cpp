@@ -2,7 +2,6 @@
 @author: ³Â²ý
 @content:
 **************************************************************************************/
-
 #include "CCTcpServerSocket.h"
 #include "stdlib.h"
 #pragma comment(lib, "ws2_32.lib")
@@ -686,7 +685,7 @@ bool CIOCPServerSocketManager :: DoCheckConnect(const std::string& sRemoteAddres
 
 void* CIOCPServerSocketManager :: ValueOf(const int iKey)
 {
-	CC_UTILS::PPHashPortItem ppItem = m_QueryClientHash.FindPortItemPointer(iKey);
+	PPHashPortItem ppItem = m_QueryClientHash.FindPortItemPointer(iKey);
 	if (ppItem != nullptr)
 		return (*ppItem)->pItem;
 	else
