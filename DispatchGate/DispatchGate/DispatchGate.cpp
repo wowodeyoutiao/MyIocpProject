@@ -37,8 +37,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	{
 		if (DoInitialWinSocket())
 		{
-			G_ConfigFileName = argv[0];
-			G_ConfigFileName = G_ConfigFileName + "config.ini";
+			G_ConfigFileName = ".\\config.ini";
 
 			ServiceManagerFunc = (TServiceManagerFunc)GetProcAddress(hWindowsServiceDll, "DoApplicationRun");
 			if (ServiceManagerFunc != nullptr)

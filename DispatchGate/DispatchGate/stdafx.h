@@ -20,3 +20,4 @@
 #include "CCTcpServerSocket.h"
 #include "CMainThread.h"
 #include "CGlobal.h"
+#include "CCIniFileParser.h"
