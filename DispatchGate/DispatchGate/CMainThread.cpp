@@ -44,6 +44,7 @@ void CMainThread::CheckConfig(const unsigned long ulTick)
 
 			m_iConfigFileAge = iAge;
 			CWgtIniFile* pIniFileParser = new CWgtIniFile();
+			pIniFileParser->loadFromFile(G_ConfigFileName);
 			try
 			{
 				/*
@@ -57,8 +58,6 @@ void CMainThread::CheckConfig(const unsigned long ulTick)
 			{
 				delete pIniFileParser;
 			}
-			pIniFileParser->loadFromFile(G_ConfigFileName);
-			delete pIniFileParser;
 		}
 	}
 

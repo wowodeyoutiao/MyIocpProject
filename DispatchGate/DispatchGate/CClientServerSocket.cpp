@@ -4,7 +4,6 @@
 **************************************************************************************/
 #include "stdafx.h"
 #include "CClientServerSocket.h"
-#pragma comment(lib, "ws2_32.lib")
 
 /************************Start Of CDGClient********************************************************/
 void CDGClient::Execute(unsigned long ulTick)

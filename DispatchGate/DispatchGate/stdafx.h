@@ -18,6 +18,7 @@
 #include "CCUtils.h"
 #include "CCTcpSocketCommon.h"
 #include "CCTcpServerSocket.h"
+#include "CCTcpClientSocket.h"
 #include "CMainThread.h"
 #include "CGlobal.h"
 #include "CCIniFileParser.h"
