@@ -28,7 +28,7 @@ private:
 private:
 	unsigned long m_ulCheckTick;
 	int m_iPingCount;
-	//m_ReceiveBuffer: TBufferStream;
+	CC_UTILS::PBufferStream m_pReceiveBuffer;
 };
 
 #endif //__CC_PIG_CLIENT_SOCKET_H__

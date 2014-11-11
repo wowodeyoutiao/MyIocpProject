@@ -34,6 +34,24 @@ namespace CC_UTILS{
 		int m_iHashItemCount;  				     			    //当前连接中的客户端句柄数量
 	}TSimpleHash, *PSimpleHash;
 
+	/**
+	* 一个简易的buffer的写入管理对象，主要用在一个长期维护的接受buffer对象
+	*/
+	typedef struct _TBufferStream
+	{
+	public:
+		void Initialize();
+		void Finalize();
+		bool Write(char* pBuf, const int iCount);
+		bool Reset(int iUsedLength);
+		void* GetMemPoint();
+		int GetPosition();
+	private:
+		void* m_pMemory;
+		int m_iMemorySize;
+		int m_iMemoryPosition;
+	}TBufferStream, *PBufferStream;
+
 	//返回文件的最后修改时间代表的版本号
 	int GetFileAge(const std::string &sFileName);
 }

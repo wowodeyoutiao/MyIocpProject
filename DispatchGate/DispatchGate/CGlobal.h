@@ -7,6 +7,8 @@
 
 #include "stdafx.h"
 
+using namespace std;
+
 //日志等级
 extern const int lmtMessage;
 extern const int lmtWarning;
@@ -14,7 +16,7 @@ extern const int lmtError;
 extern const int lmtException;
 
 //配置文件名
-extern std::string G_ConfigFileName;
+extern string G_ConfigFileName;
 
 //服务器全局对象
 

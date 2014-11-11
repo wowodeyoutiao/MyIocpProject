@@ -172,7 +172,7 @@ private:
 	std::list<void*> m_ActiveConnects;		 // 维护当前连接客户端的对象列表，该成员变量还是需要对外开放，最少需要对子类开放
 	unsigned short m_usNewCreateHandle;		 // 最新创建的Handle编号，保存
 	int m_iDelayFreeHandleCount;			 // 当前正在延时释放的客户端句柄数量
-	CC_UTILS::TSimpleHash m_QueryClientHash;           // 用于查询客户端连接的简易hash，只存放对象指针，不负责创建释放对象
+	CC_UTILS::TSimpleHash m_QueryClientHash; // 用于查询客户端连接的简易hash，只存放对象指针，不负责创建释放对象
 };
 
 #endif //__CC_TCP_SERVER_SOCKET_H__

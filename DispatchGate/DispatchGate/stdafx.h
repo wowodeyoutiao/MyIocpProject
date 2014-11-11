@@ -22,3 +22,4 @@
 #include "CMainThread.h"
 #include "CGlobal.h"
 #include "CCIniFileParser.h"
+#include "CCProtocol_Server.h"
