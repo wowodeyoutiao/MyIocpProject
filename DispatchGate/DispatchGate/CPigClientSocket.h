@@ -20,6 +20,8 @@ public:
 	void LoadConfig(CWgtIniFile* pIniFileParser);
 	void SendBuffer(unsigned short usIdent, int iParam, char* pBuf, unsigned short usBufLen);
 	void DoHeartBeat();
+protected: 
+	virtual void ProcessReceiveMsg(const char* pData, int iDataLen);
 private:
 	void OnSocketConnect(void* Sender);
 	void OnSocketDisconnect(void* Sender);
@@ -28,7 +30,6 @@ private:
 private:
 	unsigned long m_ulCheckTick;
 	int m_iPingCount;
-	CC_UTILS::PBufferStream m_pReceiveBuffer;
 };
 
 #endif //__CC_PIG_CLIENT_SOCKET_H__

@@ -98,7 +98,7 @@ void CMainThread::DoExecute()
 /************************End Of CMainThread****************************************************/
 
 
-void Log(char* str, byte loglv)
+void Log(const char* str, byte loglv)
 {
-
+	SendDebugString(str);
 }

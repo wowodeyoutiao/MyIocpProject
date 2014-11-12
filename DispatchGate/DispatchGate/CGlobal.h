@@ -9,13 +9,13 @@
 
 using namespace std;
 
-//日志等级
-extern const int lmtMessage;
-extern const int lmtWarning;
-extern const int lmtError;
-extern const int lmtException;
+//日志等级---全局常量在.h文件声明定义
+const int lmtMessage = 0;
+const int lmtWarning = 1;
+const int lmtError = 2;
+const int lmtException = 3;
 
-//配置文件名
+//配置文件名---全局变量使用extern在.h文件声明，在.cpp文件定义
 extern string G_ConfigFileName;
 
 //服务器全局对象

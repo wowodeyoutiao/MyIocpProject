@@ -100,7 +100,7 @@ namespace CC_UTILS{
 		free(m_pMemory);
 	}
 
-	bool _TBufferStream::Write(char* pBuf, const int iCount)
+	bool _TBufferStream::Write(const char* pBuf, const int iCount)
 	{
 		bool retflag = false;
 		int iNeedLength = m_iMemoryPosition + iCount;

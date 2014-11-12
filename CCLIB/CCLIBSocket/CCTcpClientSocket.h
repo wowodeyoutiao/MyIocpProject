@@ -7,6 +7,7 @@
 
 #include <mutex>
 #include "CCTcpSocketCommon.h"
+#include "CCUtils.h"
 
 /**
 *  
@@ -84,6 +85,9 @@ public:
     std::string m_Address;				// 远端ip
     int m_Port;							// 远端port
 	int m_TotalBufferlen;               // buffer总长度
+protected:
+	int ParseSocketReadData(int iType, const char* pBuf, int iCount);          //由子类的onsocketread调用
+	virtual void ProcessReceiveMsg(const char* pData, int iDataLen) = 0;       //处理具体的消息包数据，子类实现
 private:
 	bool DoInitialize();
 	bool DoError(TSocketErrorType seType);
@@ -107,8 +111,9 @@ private:
 	TSendBufferLinkedList m_SendList;   // 发送缓冲区链表
 	TBlock m_SendBlock;                 // 用于发送的
 	TBlock m_RecvBlock;                 // 用于接收的
-    SOCKADDR_IN m_SocketAddr;			// 
-	unsigned long m_Reconnect_Interval; // 重连间隔
+    SOCKADDR_IN m_SocketAddr;					   // 
+	unsigned long m_Reconnect_Interval;			   // 重连间隔
+	CC_UTILS::PBufferStream m_pReceiveBuffer;      // 处理socket数据接收的buffer
 };
 
 #endif //__CC_TCP_CLIENT_SOCKET_H__

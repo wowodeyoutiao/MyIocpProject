@@ -26,6 +26,6 @@ private:
 	int m_iConfigFileAge;                //记录config文件的版本号
 };
 
-void Log(char* str, byte loglv = 0);
+void Log(const char* str, byte loglv = 0);
 
 #endif //__CC_DISPATCH_GATE_MAIN_THREAD_H__

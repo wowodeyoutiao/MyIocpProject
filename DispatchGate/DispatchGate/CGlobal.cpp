@@ -7,8 +7,3 @@
 #include "CGlobal.h"
 
 string G_ConfigFileName;
-
-const int lmtMessage = 0;
-const int lmtWarning = 1;
-const int lmtError = 2;
-const int lmtException = 3;

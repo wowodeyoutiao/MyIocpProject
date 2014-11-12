@@ -11,8 +11,6 @@ CPigClientSocket::CPigClientSocket() : m_iPingCount(0)
 {
 	SendDebugString("CPigClientSocket 创建");
 	SetReconnectInterval(10 * 1000);
-	m_pReceiveBuffer = new CC_UTILS::TBufferStream;
-	m_pReceiveBuffer->Initialize();
 
 	m_OnConnect = std::bind(&CPigClientSocket::OnSocketConnect, this, std::placeholders::_1);
 	m_OnDisConnect = std::bind(&CPigClientSocket::OnSocketDisconnect, this, std::placeholders::_1);
@@ -22,8 +20,6 @@ CPigClientSocket::CPigClientSocket() : m_iPingCount(0)
 
 CPigClientSocket::~CPigClientSocket()
 {
-	m_pReceiveBuffer->Finalize();
-	delete(m_pReceiveBuffer);
 	SendDebugString("CPigClientSocket 销毁");
 }
 
@@ -42,28 +38,117 @@ void CPigClientSocket::LoadConfig(CWgtIniFile* pIniFileParser)
 
 void CPigClientSocket::SendBuffer(unsigned short usIdent, int iParam, char* pBuf, unsigned short usBufLen)
 {
+	int iDataLen = sizeof(TServerSocketHeader)+usBufLen;
+	char* pData = (char*)malloc(iDataLen);
+	if (pData != nullptr)
+	{
+		try
+		{
+			((PServerSocketHeader)pData)->ulSign = SS_SEGMENTATION_SIGN;
+			((PServerSocketHeader)pData)->usIdent = usIdent;
+			((PServerSocketHeader)pData)->iParam = iParam;			
+			((PServerSocketHeader)pData)->usBehindLen = usBufLen;
+			if (usBufLen > 0)
+				memcpy(pData + sizeof(TServerSocketHeader), pBuf, usBufLen);
 
+			SendBuf(pData, iDataLen);
+			free(pData);
+		}
+		catch (...)
+		{
+			free(pData);
+		}
+	}
 }
 
 void CPigClientSocket::DoHeartBeat()
 {
-	
+	unsigned long ulInterval = 10 * 1000;
+	if (!IsConnected())
+		ulInterval = 3 * 1000;
+
+	unsigned long ulTick = GetTickCount();
+	if (ulTick - m_ulCheckTick >= ulInterval)
+	{
+		m_ulCheckTick = ulTick;
+		if (IsConnected())
+		{   //连接状态进行心跳检测
+			if (m_iPingCount >= 3)
+			{
+				m_iPingCount = 0;
+				Close();
+			}
+			else
+			{
+				SendBuffer(SM_PING, 0, nullptr, 0);
+				m_iPingCount += 1;
+			}
+		}
+		else
+		{	//断开状态进行连接			
+			Open();
+		}
+	}
+
 }
 
 void CPigClientSocket::OnSocketConnect(void* Sender)
-{
-	SendDebugString("连接成功！");
+{	
+	std::string temps("与PigServer(");
+	temps.append(m_Address);
+	temps.append(")连接成功");
+	Log(temps.c_str());
 }
 
 void CPigClientSocket::OnSocketDisconnect(void* Sender)
 {
-	SendDebugString("连接已断开！");
+	std::string temps("与PigServer(");
+	temps.append(m_Address);
+	temps.append(")断开连接");
+	Log(temps.c_str());
 }
 
 void CPigClientSocket::OnSocketRead(void* Sender, const char* pBuf, int iCount)
-{}
+{
+	//收到消息,ping计数重置
+	m_iPingCount = 0;     
+	//在基类解析外层数据包，并调用ProcessReceiveMsg完成逻辑消息处理
+	int iErrorCode = ParseSocketReadData(1, pBuf, iCount);
+	if (iErrorCode > 0)
+	{
+		std::string temps("CPigClientSocket Socket Read Error, Code = ");
+		temps.append(to_string(iErrorCode));
+		Log(temps.c_str(), lmtError);
+	}	
+}
+
+void CPigClientSocket::ProcessReceiveMsg(const char* pData, int iDataLen)
+{
+	PServerSocketHeader pHeader = (PServerSocketHeader)pData;
+	switch (pHeader->usIdent)
+	{
+	case SM_PING:
+		break;
+	case SM_PIG_MSG:
+		//G_DBSocket.SendPigMsg(PData, wBehindLen); //发送Pig消息
+		break;
+	case SM_PIG_QUERY_AREA:
+		//G_DBSocket.SendAreaInfoToPig(Self); //查询区组信息
+		break;
+	default:
+		std::string temps("收到未知PigServer协议，Ident=");
+		temps.append(to_string(pHeader->usIdent));
+		Log(temps.c_str(), lmtWarning);
+		break;
+	}
+}
 
 void CPigClientSocket::OnSocketError(void* Sender, int& iErrorCode)
-{}
+{
+	std::string temps("CPigClientSocket Socket Error, Code = ");
+	temps.append(to_string(iErrorCode));
+	Log(temps.c_str(), lmtError);
+	iErrorCode = 0;
+}
 
 /************************End Of CPigClientSocket********************************************/

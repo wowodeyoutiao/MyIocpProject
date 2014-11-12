@@ -3,6 +3,7 @@
 @content: 
 **************************************************************************************/
 #include "CCTcpClientSocket.h"
+#include "CCProtocol_Server.h"
 #pragma comment(lib, "ws2_32.lib")
 
 const int NETWORK_EVENT_RECEIVE_BUFFER_SIZE = 16 * 1024;					// 网络事件模型下的接收buffer大小
@@ -315,12 +316,16 @@ CIOCPClientSocketManager::CIOCPClientSocketManager() : m_OnRead(nullptr), m_OnEr
 	memset(&m_RecvBlock, 0, sizeof(m_RecvBlock));
 	memset(&m_SocketAddr, 0, sizeof(m_SocketAddr));
 	m_SendList.DoInitial(MAX_CACHE_SIZE);
+	m_pReceiveBuffer = new CC_UTILS::TBufferStream;
+	m_pReceiveBuffer->Initialize();
 }
 
 CIOCPClientSocketManager :: ~CIOCPClientSocketManager()
 {
 	DoClose();
 	WaitThreadExecuteOver();
+	m_pReceiveBuffer->Finalize();
+	delete(m_pReceiveBuffer);
 }
 
 int CIOCPClientSocketManager :: SendBuf(const char* pBuf, int iCount)
@@ -336,6 +341,48 @@ int CIOCPClientSocketManager :: SendBuf(const char* pBuf, int iCount)
 			PrepareSend(0, 0);
 	}
 	return sendLen;
+}
+
+int  CIOCPClientSocketManager :: ParseSocketReadData(int iType, const char* pBuf, int iCount)
+{
+	m_pReceiveBuffer->Write(pBuf, iCount);
+	char* pTempBuf = (char*)m_pReceiveBuffer->GetMemPoint();
+	int iTempBufLen = m_pReceiveBuffer->GetPosition();
+	int iErrorCode = 0;
+	int iOffset = 0;
+	int iPackageLen = 0;
+	PServerSocketHeader pHeader = nullptr;
+	while (iTempBufLen - iOffset >= sizeof(TServerSocketHeader))
+	{
+		pHeader = (PServerSocketHeader)pTempBuf;
+		if (SS_SEGMENTATION_SIGN == pHeader->ulSign)
+		{
+			iPackageLen = sizeof(TServerSocketHeader)+pHeader->usBehindLen;
+			//单个数据包超长后扔掉
+			if (iPackageLen >= MAXWORD)
+			{
+				iOffset = iTempBufLen;
+				iErrorCode = 1;
+				break;
+			}
+			//加载m_pReceiveBuffer数据时，解析最新的包长度iPackageLen在当前位移iOffset上超出iTempBufLen
+			if (iOffset + iPackageLen > iTempBufLen)
+				break;
+			//处理收到的数据包，子类实现
+			ProcessReceiveMsg(pTempBuf + sizeof(TServerSocketHeader), pHeader->usBehindLen);
+			//移动指针，继续加载socket读入的数据
+			iOffset += iPackageLen;
+			pTempBuf += iPackageLen;
+		}
+		else
+		{	//向下寻找包头
+			iErrorCode = 2;
+			iOffset += 1;
+			pTempBuf += 1;
+		}
+	}
+	m_pReceiveBuffer->Reset(iOffset);
+	return iErrorCode;
 }
 
 bool CIOCPClientSocketManager :: DoInitialize()

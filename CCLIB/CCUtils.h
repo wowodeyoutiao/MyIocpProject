@@ -42,7 +42,7 @@ namespace CC_UTILS{
 	public:
 		void Initialize();
 		void Finalize();
-		bool Write(char* pBuf, const int iCount);
+		bool Write(const char* pBuf, const int iCount);
 		bool Reset(int iUsedLength);
 		void* GetMemPoint();
 		int GetPosition();
