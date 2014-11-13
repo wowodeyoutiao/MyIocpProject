@@ -12,7 +12,10 @@
 * DispatchGate对Center服务器的连接端口
 *
 */
-const int MAX_CENTER_SERVER_COUNT = 3;
+const int MAX_CENTER_SERVER_COUNT = 3;    //中央服务器最大数量
+const int MAX_RESSERVER_COUNT = 40;       //资源服务器最大数量
+
+extern TServerConnectInfo G_ResServerInfos[];  //资源服务器的连接信息
 
 class CCenterClientSocket : public CIOCPClientSocketManager
 {

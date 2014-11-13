@@ -61,3 +61,5 @@ Temporary Items
 *.pch
 DispatchGate/ipch/dispatchgate-7f9819c9/dispatchgate-91edb5fd.ipch
 *.pch
+*.ipch
+*.pch

@@ -5,6 +5,8 @@
 #include "stdafx.h"
 #include "CCenterClientSocket.h"
 
+TServerConnectInfo G_ResServerInfos[MAX_RESSERVER_COUNT];
+
 /************************Start Of CCenterClientSocket******************************************/
 
 CCenterClientSocket::CCenterClientSocket() : m_iPingCount(0)
@@ -124,9 +126,27 @@ void CCenterClientSocket::OnSocketRead(void* Sender, const char* pBuf, int iCoun
 
 void CCenterClientSocket::ProcessReceiveMsg(PServerSocketHeader pHeader, const char* pData, int iDataLen)
 {
+	PServerConnectInfo pInfo;
+	int iCount;
 	switch (pHeader->usIdent)
 	{
 	case SM_PING:
+		break;
+	case SM_SERVER_CONFIG:
+		pInfo = (PServerConnectInfo)pData;
+		iCount = pHeader->iParam;
+		if (iCount > MAX_RESSERVER_COUNT)
+			iCount = MAX_RESSERVER_COUNT;
+		for (int i = 0; i < iCount; i++)
+		{
+			G_ResServerInfos[i] = *pInfo;
+			pInfo += 1;
+		}
+		if (iCount > 0)
+		{
+			for (int i = iCount; i < MAX_RESSERVER_COUNT; i++)
+				G_ResServerInfos[i].Addr.iPort = 0;
+		}
 		break;
 	default:
 		std::string temps("收到未知CenterServer协议，Ident=");
@@ -154,8 +174,13 @@ void CCenterClientSocket::Reconnect()
 		m_Address = m_ServerArray[m_iWorkIndex].IPAddress;
 		m_Port = m_ServerArray[m_iWorkIndex].iPort;
 		if (m_Port > 0)
-		{
-			//Log(Format('Connect to CenterServer(%s:%d).', [Address, Port]));
+		{		
+			std::string temps("Connect to CenterServer(");
+			temps.append(m_Address);
+			temps.append(":");
+			temps.append(to_string(m_Port));
+			temps.append(")");
+			Log(temps.c_str(), lmtError);
 			Open();
 		}
 	}

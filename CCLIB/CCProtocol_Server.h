@@ -27,6 +27,12 @@ typedef struct _TServerAddress
 	unsigned char ucNetType;
 }TServerAddress, *PServerAddress;
 
+// ·şÎñÆ÷µ±Ç°µÄÁ¬½ÓĞÅÏ¢
+typedef struct _TServerConnectInfo
+{
+	TServerAddress Addr;
+	int iConnectCount;
+}TServerConnectInfo, *PServerConnectInfo;
 
 const int SS_SEGMENTATION_SIGN = 0XFFEEDDCC;                        // ServerÖ®¼äÍ¨ĞÅĞ­ÒéÆğÊ¼±êÖ¾
 
@@ -34,6 +40,8 @@ const int SS_SEGMENTATION_SIGN = 0XFFEEDDCC;                        // ServerÖ®¼
 const int SM_REGISTER = 0x1000;			                            // ×¢²á·şÎñÆ÷
 const int SM_UNREGISTER = 0x1001;							        // ×¢Ïú·şÎñÆ÷
 const int SM_PING = 0x1002;								            // ĞÄÌø¼ì²â
+
+const int SM_SERVER_CONFIG = 0x1005;                                // ÅäÖÃĞÅÏ¢
 
 //PigServerÏà¹ØĞ­Òé
 const int SM_PIG_MSG = 0x3001;		     						    //ÖĞ×ªPigÏûÏ¢
