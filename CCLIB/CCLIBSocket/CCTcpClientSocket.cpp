@@ -3,7 +3,6 @@
 @content: 
 **************************************************************************************/
 #include "CCTcpClientSocket.h"
-#include "CCProtocol_Server.h"
 #pragma comment(lib, "ws2_32.lib")
 
 const int NETWORK_EVENT_RECEIVE_BUFFER_SIZE = 16 * 1024;					// 网络事件模型下的接收buffer大小
@@ -357,7 +356,7 @@ int  CIOCPClientSocketManager :: ParseSocketReadData(int iType, const char* pBuf
 		pHeader = (PServerSocketHeader)pTempBuf;
 		if (SS_SEGMENTATION_SIGN == pHeader->ulSign)
 		{
-			iPackageLen = sizeof(TServerSocketHeader)+pHeader->usBehindLen;
+			iPackageLen = sizeof(TServerSocketHeader) + pHeader->usBehindLen;
 			//单个数据包超长后扔掉
 			if (iPackageLen >= MAXWORD)
 			{
@@ -369,7 +368,7 @@ int  CIOCPClientSocketManager :: ParseSocketReadData(int iType, const char* pBuf
 			if (iOffset + iPackageLen > iTempBufLen)
 				break;
 			//处理收到的数据包，子类实现
-			ProcessReceiveMsg(pTempBuf + sizeof(TServerSocketHeader), pHeader->usBehindLen);
+			ProcessReceiveMsg(pHeader, pTempBuf + sizeof(TServerSocketHeader), pHeader->usBehindLen);
 			//移动指针，继续加载socket读入的数据
 			iOffset += iPackageLen;
 			pTempBuf += iPackageLen;

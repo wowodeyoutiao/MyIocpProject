@@ -6,8 +6,9 @@
 #define __CC_TCP_CLIENT_SOCKET_H__
 
 #include <mutex>
-#include "CCTcpSocketCommon.h"
 #include "CCUtils.h"
+#include "CCTcpSocketCommon.h"
+#include "CCProtocol_Server.h"
 
 /**
 *  
@@ -87,7 +88,7 @@ public:
 	int m_TotalBufferlen;               // buffer总长度
 protected:
 	int ParseSocketReadData(int iType, const char* pBuf, int iCount);          //由子类的onsocketread调用
-	virtual void ProcessReceiveMsg(const char* pData, int iDataLen) = 0;       //处理具体的消息包数据，子类实现
+	virtual void ProcessReceiveMsg(PServerSocketHeader pHeader, const char* pData, int iDataLen) = 0;       //处理具体的消息包数据，子类实现
 private:
 	bool DoInitialize();
 	bool DoError(TSocketErrorType seType);

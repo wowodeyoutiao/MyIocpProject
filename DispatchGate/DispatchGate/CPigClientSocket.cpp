@@ -36,7 +36,7 @@ void CPigClientSocket::LoadConfig(CWgtIniFile* pIniFileParser)
 	}
 }
 
-void CPigClientSocket::SendBuffer(unsigned short usIdent, int iParam, char* pBuf, unsigned short usBufLen)
+void CPigClientSocket::SendToServer(unsigned short usIdent, int iParam, char* pBuf, unsigned short usBufLen)
 {
 	int iDataLen = sizeof(TServerSocketHeader)+usBufLen;
 	char* pData = (char*)malloc(iDataLen);
@@ -80,7 +80,7 @@ void CPigClientSocket::DoHeartBeat()
 			}
 			else
 			{
-				SendBuffer(SM_PING, 0, nullptr, 0);
+				SendToServer(SM_PING, 0, nullptr, 0);
 				m_iPingCount += 1;
 			}
 		}
@@ -122,9 +122,8 @@ void CPigClientSocket::OnSocketRead(void* Sender, const char* pBuf, int iCount)
 	}	
 }
 
-void CPigClientSocket::ProcessReceiveMsg(const char* pData, int iDataLen)
+void CPigClientSocket::ProcessReceiveMsg(PServerSocketHeader pHeader, const char* pData, int iDataLen)
 {
-	PServerSocketHeader pHeader = (PServerSocketHeader)pData;
 	switch (pHeader->usIdent)
 	{
 	case SM_PING:

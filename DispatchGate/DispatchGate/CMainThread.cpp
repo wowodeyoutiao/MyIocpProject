@@ -51,6 +51,9 @@ void CMainThread::CheckConfig(const unsigned long ulTick)
 				G_DBSocket.LoadConfig(IniFile);
 				G_GateSocket.LoadConfig(IniFile);
 				G_PigSocket.LoadConfig(IniFile);
+
+				增加一个 
+				G_CenterServer.LoadCOnfig(IniFile);
 				*/
 				delete pIniFileParser;
 			}

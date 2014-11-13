@@ -15,6 +15,17 @@ typedef struct _TServerSocketHeader
 	unsigned short usBehindLen;			// 后续数据长度
 }TServerSocketHeader, *PServerSocketHeader;
 
+// ip地址的字符串类型
+typedef char TIPAddress[15];
+typedef TIPAddress* PIPAddress;
+
+// 服务器地址类型
+typedef struct _TServerAddress
+{
+	TIPAddress IPAddress;
+	int iPort;
+	unsigned char ucNetType;
+}TServerAddress, *PServerAddress;
 
 
 const int SS_SEGMENTATION_SIGN = 0XFFEEDDCC;                        // Server之间通信协议起始标志

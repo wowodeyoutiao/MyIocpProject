@@ -1,35 +1,41 @@
 /**************************************************************************************
 @author: 陈昌
-@content: Dispatch作为客户端方连接PIG服务器的端口
+@content: Dispatch作为客户端方连接CenterServer服务器的端口
 **************************************************************************************/
-#ifndef __CC_PIG_CLIENT_SOCKET_H__
-#define __CC_PIG_CLIENT_SOCKET_H__
+#ifndef __CC_CENTER_CLIENT_SOCKET_H__
+#define __CC_CENTER_CLIENT_SOCKET_H__
 
 #include "stdafx.h"
 
 /**
 *
-* DispatchGate对PIG服务器的连接端口
+* DispatchGate对Center服务器的连接端口
 *
 */
-class CPigClientSocket : public CIOCPClientSocketManager
+const int MAX_CENTER_SERVER_COUNT = 3;
+
+class CCenterClientSocket : public CIOCPClientSocketManager
 {
 public:
-	CPigClientSocket();
-	virtual ~CPigClientSocket();
+	CCenterClientSocket();
+	virtual ~CCenterClientSocket();
 	void LoadConfig(CWgtIniFile* pIniFileParser);
 	void SendToServer(unsigned short usIdent, int iParam, char* pBuf, unsigned short usBufLen);
-	void DoHeartBeat();
-protected: 
+	void DoHeartBeat();					    // 发送心跳
+protected:
 	virtual void ProcessReceiveMsg(PServerSocketHeader pHeader, const char* pData, int iDataLen);
 private:
 	void OnSocketConnect(void* Sender);
 	void OnSocketDisconnect(void* Sender);
 	void OnSocketRead(void* Sender, const char* pBuf, int iCount);
 	void OnSocketError(void* Sender, int& iErrorCode);
+	void Reconnect();                       // 重连
+	void SendRegisterServer();              // 注册服务器
 private:
 	unsigned long m_ulCheckTick;
 	int m_iPingCount;
+	int m_iWorkIndex;
+	TServerAddress m_ServerArray[MAX_CENTER_SERVER_COUNT];        // 可配置多个CenterServer           
 };
 
-#endif //__CC_PIG_CLIENT_SOCKET_H__
+#endif //__CC_CENTER_CLIENT_SOCKET_H__
