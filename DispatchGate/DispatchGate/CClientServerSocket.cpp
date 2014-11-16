@@ -5,6 +5,11 @@
 #include "stdafx.h"
 #include "CClientServerSocket.h"
 
+const std::string IPCONFIG_FILE = "ipaddress.txt";        // IP配置文件
+const int MAX_CONNECT_TIMEOUT = 30 * 1000;                // 最长的连接时间
+const int DELAY_DISCONNECT_TIME = 3000;                   // 延时断开时间
+const std::string War_Warning = "  本游戏区是自由对战模式，遵守游戏规则，可获得畅快游戏体验。</br>  龙界争霸现已开启<font color=\"0xFFDD0000\">防沉迷系统</font>，详细情况请关注游戏官网信息。";
+
 /************************Start Of CDGClient********************************************************/
 void CDGClient::Execute(unsigned long ulTick)
 {

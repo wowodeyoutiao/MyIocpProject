@@ -25,15 +25,41 @@ CCenterClientSocket::~CCenterClientSocket()
 
 void CCenterClientSocket::LoadConfig(CWgtIniFile* pIniFileParser)
 {
+	bool bConfigOK = false;
 	if (pIniFileParser != nullptr)
 	{
-		m_Address = pIniFileParser->getString("PigServer", "IP", "");
-		m_Port = pIniFileParser->getInteger("PigServer", "Port", DEFAULT_PIG_SERVER_PORT);
-		if ("" == m_Address)
-			Log("未配置PigServer的IP！");
-		else
-			Open();
+		std::string sServerStr;		
+		std::vector<std::string> vec;
+		int iPort;
+		for (int i = 0; i < MAX_CENTER_SERVER_COUNT; i++)
+		{
+			std::string sKeyName("Server");
+			sKeyName.append(to_string(i));
+			sServerStr = pIniFileParser->getString("CenterServer", sKeyName, "");
+			if (sServerStr == "")
+				break;
+
+			vec.clear();
+			CC_UTILS::SplitStr(sServerStr, ":", &vec);  //vec[0]是ip vec[1]是port port必须配置
+			//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			//这里如果是无法转换成整数，则会报异常
+			//stoi这个函数不好用，需要做其它考虑了
+			//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			iPort = stoi(vec[1]);   
+			if (iPort > 0)
+			{
+				//端口必须配置
+				strcpy_s(m_ServerArray[i].IPAddress, 16, vec[0].c_str());				
+				m_ServerArray[i].iPort = iPort;
+				bConfigOK = true;
+			}
+		}
 	}
+	m_iWorkIndex = 0;
+	if (!bConfigOK)
+		Log("CenterServer 未配置!", lmtError);
 }
 
 void CCenterClientSocket::SendToServer(unsigned short usIdent, int iParam, char* pBuf, unsigned short usBufLen)

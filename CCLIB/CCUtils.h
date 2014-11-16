@@ -6,6 +6,7 @@
 #define __CC_UTILS_H__
 
 #include <string>
+#include <vector>
 
 namespace CC_UTILS{
 	//简易的Hash结点
@@ -54,6 +55,9 @@ namespace CC_UTILS{
 
 	//返回文件的最后修改时间代表的版本号
 	int GetFileAge(const std::string &sFileName);
+
+	//字符串分割
+	void SplitStr(const std::string& s, const std::string& delim, std::vector<std::string>* ret);
 }
 
 #endif //__CC_UTILS_H__

@@ -21,8 +21,45 @@ protected:
 	virtual void Execute(unsigned long ulTick);
 	virtual void SocketRead(const char* pBuf, int iCount);
 private:
-	unsigned long m_ulLastRunTick;
+	unsigned long m_ulLastConnectTick;
+	unsigned long m_ulForceCloseTick;
+	unsigned short m_usSelectMaskServerID;       //玩家选择的服务器用于外显的编号
+	int m_iEncodeIdx;                            //加密编号
+	int m_iSelectRealServerID;                   //玩家选择的服务器真实编号
+	bool m_bIsGMIP;								 //判断是否为gmIP段
+	int m_iClientType;							 //不同的客户端类型
+	unsigned char m_ucNetType;                   //客户端的网络类型---通过客户端对固定网址的解析，来判断不同的网络类型
 };
+
+/*
+  TClient = class(TCustomClient)
+  private
+    FEnCodeIdx: integer;
+    FConnectTick: Cardinal;
+    FSelectServer: Word;
+    FBoMasterIP: Boolean;
+    FClientType: integer;
+    FForceCloseTick: Cardinal;
+    FSelServerID: Integer;
+    FNetType: Byte;
+    procedure cmSelectServer(Buf: Pansichar; BufLen: Word);
+    procedure cmCloseWindow(Buf: Pansichar; BufLen: Word);
+    procedure SendToClient(wIdent: Word; Data: PAnsiChar; wDataLen: Word);
+  protected
+    procedure Execute(Tick: cardinal); override;
+    procedure SocketRead(const Buf; Count: integer); override;
+    procedure OnCreate; override;
+  public
+    procedure ForceClose;
+    procedure OpenWindow(wtype: TClientWindowType; nParam: integer; const msg: ansistring = '');
+    property SelectServerID: Word read FSelectServer;
+    property SelServerID: Integer read FSelServerID;
+    property BoMasterIP: Boolean read FBoMasterIP;
+    property EnCodeIdx: Integer read FEnCodeIdx;
+    property ClientType: Integer read FClientType;
+    property netType: Byte read FNetType;
+  end;
+*/
 
 /**
 *
