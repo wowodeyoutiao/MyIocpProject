@@ -9,7 +9,7 @@
 // Server间通讯的协议头
 typedef struct _TServerSocketHeader
 {
-	unsigned long ulSign;				// 分隔符 SEGMENTATION_SIGN
+	unsigned long ulSign;				// 分隔符 SS_SEGMENTATION_SIGN
 	int iParam;							// 扩展参数
 	unsigned short usIdent;				// 协议号
 	unsigned short usBehindLen;			// 后续数据长度
@@ -34,7 +34,7 @@ typedef struct _TServerConnectInfo
 	int iConnectCount;
 }TServerConnectInfo, *PServerConnectInfo;
 
-const int SS_SEGMENTATION_SIGN = 0XFFEEDDCC;                        // Server之间通信协议起始标志
+const int SS_SEGMENTATION_SIGN = 0XFFEEDDCC;                        // 服务器之间通信协议起始标志
 
 // 服务器间协议
 const int SM_REGISTER = 0x1000;			                            // 注册服务器

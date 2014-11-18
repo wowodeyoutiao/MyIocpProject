@@ -71,9 +71,6 @@
     <ClCompile Include="..\..\CCLIB\CCLIBSocket\CCTcpClientSocket.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\CCLIB\CCProtocol_Server.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="CCenterClientSocket.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
