@@ -15,8 +15,12 @@ const int lmtWarning = 1;
 const int lmtError = 2;
 const int lmtException = 3;
 
+const int MAX_CENTER_SERVER_COUNT = 3;    //中央服务器最大数量
+const int MAX_RESSERVER_COUNT = 40;       //资源服务器最大数量
+
 //配置文件名---全局变量使用extern在.h文件声明，在.cpp文件定义
-extern string G_ConfigFileName;
+extern string G_ConfigFileName;                //配置文件
+extern TServerConnectInfo G_ResServerInfos[];  //资源服务器的连接信息
 
 //服务器全局对象
 

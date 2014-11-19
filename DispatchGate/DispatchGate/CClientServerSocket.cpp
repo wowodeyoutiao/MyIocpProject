@@ -70,9 +70,57 @@ void CDGClient::Execute(unsigned long ulTick)
 		m_ulLastConnectTick = ulTick;
 }
 
+void CDGClient::ProcessReceiveMsg(char* pHeader, char* pData, int iDataLen)
+{
+	switch (((PClientSocketHead)pHeader)->usIdent)
+	{
+	case CM_PING:
+		SendToClient(CM_PING, nullptr, 0);
+		break;
+	case CM_SELECT_SERVER_OLD:
+		OpenWindow(cwMessageBox, 0, "客户端版本不正确，请先更新！");
+		ForceClose();
+		break;
+	case CM_SELECT_SERVER:
+		CMSelectServer(pData, iDataLen);
+		break;
+	case CM_CLOSE_WINDOW:
+		CMCloseWindow(pData, iDataLen);
+		break;
+	case CM_QUIT:
+		ForceClose();
+		break;
+	default:
+		//----------------------------------------------------
+		//----------------------------------------------------
+		//----------------------------------------------------
+		//----------------------------------------------------
+		//Log(Format('收到未知客户端协议，IP=%s Ident=%d', [RemoteAddress, Ident]), lmtWarning);
+		Log("收到未知客户端协议", lmtWarning);
+		break;
+	}
+}
+
 void CDGClient::SocketRead(const char* pBuf, int iCount)
 {
-	SendDebugString("CSampleConnector 读取数据");
+	if (m_ulForceCloseTick > 0)
+		return;
+	if (iCount >= sizeof(TClientSocketHead))
+	{
+		PClientSocketHead pHead = (PClientSocketHead)pBuf;
+		if (pHead->usPackageLen < sizeof(TClientSocketHead))
+			return;
+		if (CS_SEGMENTATION_CLIENTSIGN == pHead->ulSign)
+			m_iClientType = 1;
+		else if (CS_SEGMENTATION_CLIENTSIGN + 1 == pHead->ulSign)
+			m_iClientType = 2;
+		else
+			return;
+
+		char* pData = (char*)pHead + sizeof(TClientSocketHead);
+		int iDataLen = pHead->usPackageLen - sizeof(TClientSocketHead);
+		ProcessReceiveMsg((char*)pHead, pData, iDataLen);
+	}
 }
 
 void CDGClient::OpenWindow(TClientWindowType wtype, int iParam, const std::string& msg)
@@ -101,7 +149,53 @@ void CDGClient::OpenWindow(TClientWindowType wtype, int iParam, const std::strin
 
 void CDGClient::CMSelectServer(char* pBuf, unsigned short usBufLen)
 {
+	m_ucNetType = 0;
+	if (sizeof(int) == usBufLen)
+	{
+		m_usSelectMaskServerID = *((int*)pBuf);
+	}
+	else if (sizeof(TCMSelectServer) == usBufLen)
+	{
+		m_usSelectMaskServerID = ((PCMSelectServer)pBuf)->iMaskServerID;
+		//---------------------------------------------------------
+		//---------------------------------------------------------
+		//---------------------------------------------------------
+		//m_ucNetType = G_GateSocket.GetNetType(((PCMSelectServer)pBuf)->iMaskServerID);
+	}
+	else
+	{
+		OpenWindow(cwMessageBox, 0, "选择服务器失败");
+		std::string temps("选服务器失败: Area = ");
+		temps.append(to_string(m_usSelectMaskServerID));
+		Log(temps.c_str());
+		return;
+	}
 
+	//-------------------------------------------------
+	//-------------------------------------------------
+	//-------------------------------------------------
+	//对资源服务器进行负载均衡
+	//m_iSelectRealServerID = G_DBSocket.SelectServer(this);
+	if (m_iSelectRealServerID > 0)
+	{
+		OpenWindow(cwWarRule, 0, War_Warning);
+		int iMinCount = 100000;
+		TServerAddress address;
+		memset(&address, 0, sizeof(TServerAddress));
+		for (int i = 0; i < MAX_RESSERVER_COUNT; i++)
+		{
+			if (0 == G_ResServerInfos[i].Addr.iPort)
+				break;
+
+			if (iMinCount > G_ResServerInfos[i].iConnectCount)
+			{
+				iMinCount = G_ResServerInfos[i].iConnectCount;
+				address = G_ResServerInfos[i].Addr;
+			}
+		}
+		if (address.iPort > 0)
+			SendToClient(SCM_RESSERVER_INFO, (char*)&address, sizeof(TServerAddress));
+	}
 }
 
 void CDGClient::CMCloseWindow(char* pBuf, unsigned short usBufLen)
@@ -193,3 +287,4 @@ void CClientServerSocket::OnClientDisconnect(void* Sender)
 }
 
 /************************End Of CClientServerSocket****************************************************/
+

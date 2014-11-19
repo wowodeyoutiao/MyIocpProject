@@ -5,8 +5,6 @@
 #include "stdafx.h"
 #include "CCenterClientSocket.h"
 
-TServerConnectInfo G_ResServerInfos[MAX_RESSERVER_COUNT];
-
 /************************Start Of CCenterClientSocket******************************************/
 
 CCenterClientSocket::CCenterClientSocket() : m_iPingCount(0)

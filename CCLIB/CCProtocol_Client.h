@@ -100,6 +100,13 @@ enum TClientWindowType{
 	cwYearCeremony                                          // 年度盛典
 };
 
+// CM_SELECT_SERVER
+typedef struct _TCMSelectServer
+{
+	int iMaskServerID;				 // 选择的对外的服务器号
+	int iCheckIP;                    // 所解析的 固定域名的 地址，用以区分不同的网络类型
+}TCMSelectServer, *PCMSelectServer;
+
 //CM_CLOSE_WINDOW、SCM_OPEN_WINDOW、SCM_CLOSE_WINDOW
 typedef struct _TClientWindowRec
 {
@@ -112,13 +119,42 @@ typedef struct _TClientWindowRec
 const int CS_SEGMENTATION_CLIENTSIGN = 0XAABBCCDD;          // 游戏客户端和服务器间通讯协议起始标志
 
 //游戏客户端发送给服务器的消息
+const int CM_PING = 10;										 // 心跳
+const int CM_SELECT_SERVER_OLD = 11;						 // 旧版选服协议
+const int CM_GAME_CONNECT = 12;								 // 连接到GameGate
+const int CM_CLOSE_WINDOW = 14;                              // 关闭窗体
+const int CM_GAME_QUEUE = 15;                                // 查询队列
+const int CM_REGIST_REQUEST = 17;                            // 新建帐号
+const int CM_VERIFY_CODE = 18;                               // 提交验证码
+const int CM_NEXT_VERIFY_CODE = 19;                          // 下一张验证码
+const int CM_LOGON_OK = 21;                                  // 进入游戏ok
+const int CM_RUSH = 99;										 // 前冲
+const int CM_QUIT = 100;									 // 正常退出
 
-const int CM_CLOSE_WINDOW = 14;                             // 关闭窗体
+//游戏客户端部分重要消息的重新编号
+const int CM_SELECT_SERVER = 3011;                           // 选服协议
+const int CM_AUTHEN_REQUEST = 3013;                          // 认证请求
+const int CM_CREATE_ROLE = 3016;                             // 创建角色
+const int CM_ENTER_GAMESCENE = 3020;                         // 进入游戏
+const int CM_GPS_CHECK_RESPONSE = 4100;                      // 反外挂，数据包返回
+const int CM_WALK = 4101;                                    //走
+const int CM_RUN = 4102;                                     //跑
+const int CM_PHYHIT = 4103;                                  //物理攻击
+const int CM_SPELL = 4104;                                   //魔法攻击
+const int CM_SAY = 4107;                                     //客户端发送聊天信息
+const int CM_PICKUP = 4108;                                  //拾取物品
+const int CM_CLICK_NPC = 4115;                               //点击NPC
+const int CM_CLICK_NPC_OPTION = 4116;                        //点击NPC对话框中的选项
+const int CM_USE_BAG_ITEM = 4117;                            //客户端双击使用背包物品
+const int CM_QUESTION_DETAIL_REQ = 4118;                     //客户端请求答题信息
+const int CM_QUESTION_ANSWER = 4119;                         //回答问题
+const int CM_PWDPROTECT_CHG = 4120;                          //二级密码保护状态切换
 
 //服务器端发给游戏客户端的消息
 
 const int SCM_OPEN_WINDOW = 14;                             // 开启窗口
 const int SCM_CLOSE_WINDOW = 15;                            // 服务端请求关闭窗口
+const int SCM_RESSERVER_INFO = 18;                          // 资源服务器的IP
 
 
 
