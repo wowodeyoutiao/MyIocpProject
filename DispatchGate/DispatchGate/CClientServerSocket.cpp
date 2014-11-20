@@ -37,6 +37,11 @@ bool CDGClient::GetIsGMIP()
 	return m_bIsGMIP;
 }
 
+void CDGClient::SetGMIP(const bool bFlag)
+{
+	m_bIsGMIP = bFlag;
+}
+
 int CDGClient::GetEncodeIdx()
 {
 	return m_iEncodeIdx;
@@ -239,30 +244,210 @@ void CDGClient::SendToClient(unsigned short usIdent, char* pData, unsigned short
 
 
 /************************Start Of CClientServerSocket************************************************/
-CClientServerSocket::CClientServerSocket()
+CClientServerSocket::CClientServerSocket() :m_ulLastCheckTick(0), m_iIPConfigFileAge(0), m_DefaultRule(itUnKnow), m_sWarWarning("")				 
 {
-	SendDebugString("CSampleServerManager 创建");
-	m_OnCheckAddress = std::bind(&CClientServerSocket::OnCheckIPAddress, this, std::placeholders::_1);
+	SendDebugString("CClientServerSocket 创建");
+	//m_OnCheckAddress = std::bind(&CClientServerSocket::OnCheckIPAddress, this, std::placeholders::_1);
 	m_OnCreateClient = std::bind(&CClientServerSocket::OnCreateClientSocket, this, std::placeholders::_1);
 	m_OnClientError = std::bind(&CClientServerSocket::OnSocketError, this, std::placeholders::_1, std::placeholders::_2);
 	m_OnConnect = std::bind(&CClientServerSocket::OnClientConnect, this, std::placeholders::_1);
-	m_OnDisConnect = std::bind(&CClientServerSocket::OnClientDisconnect, this, std::placeholders::_1);
 }
 
 CClientServerSocket::~CClientServerSocket()
 {
-	SendDebugString("CSampleServerManager 销毁");
+	Clear();
+	SendDebugString("CClientServerSocket 销毁");
+}
+
+void CClientServerSocket::LoadConfig(CWgtIniFile* pIniFileParser)
+{
+	if (pIniFileParser != nullptr)
+	{
+		int iPort = pIniFileParser->getInteger("Setup", "GatePort", DEFAULT_DispatchGate_CLIENT_PORT);
+		std::string sTemp;
+		std::string sKeyName("Type_");
+		for (int i = 0; i < MAX_NET_TYPE_CONFIG; i++)
+		{
+			sTemp = pIniFileParser->getString("NetType", sKeyName + to_string(i), "");
+			if ("" == sTemp)
+				break;
+			m_NetTypes[i] = inet_addr(sTemp.c_str());
+		}
+
+		if (!IsActive())
+		{
+			m_sLocalIP = "0.0.0.0";
+			m_iListenPort = iPort;
+			sTemp = "接受客户端连接, Port = ";
+			sTemp.append(to_string(iPort));
+			Log(sTemp.c_str(), lmtMessage);
+			Open();
+		}
+	}
+}
+
+bool CClientServerSocket::IsMasterIP(std::string& sIP)
+{
+	bool retFlag = false;
+	std::string sTempIP(sIP);
+	sTempIP.append(".");	
+	PIpRuleNode pNode;
+	std::list<PIpRuleNode>::iterator vIter;
+
+	std::lock_guard<std::mutex> guard(m_IPRuleLockCS);
+	for (vIter = m_IPRuleList.begin(); vIter != m_IPRuleList.end(); ++vIter)
+	{
+		pNode = (PIpRuleNode)*vIter;
+		if (pNode->ipType != itMaster)
+			continue;
+		//--------------------------------------
+		//--------------------------------------
+		//这个判断需要调试检验一下
+		if (sTempIP.find(pNode->sMatchIP) == 1)
+		{
+			retFlag = true;
+			break;
+		}
+	}
+	return retFlag;
+}
+
+void CClientServerSocket::SMSelectServer(int iSocketHandle, char* pBuf, unsigned short usBufLen)
+{
+}
+
+TIpType CClientServerSocket::GetDefaultRule()
+{
+	return m_DefaultRule;
 }
 
 void CClientServerSocket::DoActive()
 {
+	CIOCPServerSocketManager::DoActive();
+	CheckIpConfig(GetTickCount());
+}
+
+void CClientServerSocket::CheckIpConfig(unsigned long ulTick)
+{
+	if ((0 == m_ulLastCheckTick) || (ulTick - m_ulLastCheckTick >= 20 * 1000))
+	{
+		m_ulLastCheckTick = ulTick;
+		std::string sIPConfigFileName(G_CurrentExePath + "config.ini");
+		int iAge = CC_UTILS::GetFileAge(sIPConfigFileName);
+
+		if ((iAge != -1) && (iAge != m_iIPConfigFileAge))
+		{
+			if (m_iIPConfigFileAge > 0)
+				Log("Reload IPConfig File...", lmtMessage);
+
+			m_iIPConfigFileAge = iAge;
+			LoadIpConfigFile(sIPConfigFileName);
+		}
+	}
+}
+
+void CClientServerSocket::LoadIpConfigFile(const std::string& sFileName)
+{
 
 }
 
-bool CClientServerSocket::OnCheckIPAddress(const std::string& sIP)
+void CClientServerSocket::Clear()
 {
-	SendDebugString("CheckIPAddress");
-	return true;
+	PIpRuleNode pNode;
+	std::list<PIpRuleNode>::iterator vIter;
+	
+	std::lock_guard<std::mutex> guard(m_IPRuleLockCS);
+	for (vIter = m_IPRuleList.begin(); vIter != m_IPRuleList.end(); ++vIter)
+	{
+		pNode = (PIpRuleNode)*vIter;
+		delete(pNode);
+	}
+	m_IPRuleList.clear();	
+}
+
+void CClientServerSocket::AddIpRuleNode(const std::string& sIP, TIpType ipType)
+{
+	std::string sTempIP;
+	//这里的字符串处理需要再检查---------------------
+	//这里的字符串处理需要再检查---------------------
+	//这里的字符串处理需要再检查---------------------
+	int iPos = sIP.find('*');
+	if (iPos != string::npos)
+		sTempIP = sIP.substr(0, iPos-1);
+	else
+		sTempIP = sIP;	
+
+	if ("" == sTempIP)
+		return;
+	if (sTempIP.at(sTempIP.length()) != '.')
+		sTempIP = sTempIP + '.';
+	
+	std::lock_guard<std::mutex> guard(m_IPRuleLockCS);
+	PIpRuleNode pNode = new TIpRuleNode;
+	pNode->ipType = ipType;
+	pNode->sMatchIP = sIP;		
+}
+
+/*
+返回：
+0 : 未知
+1 : 默认(电信)
+2 : 电信
+3 : 网通
+4 : 移动
+5 : 教育网
+*/
+unsigned short CClientServerSocket::GetNetType(int nAddr)
+{
+	unsigned short result = 0;
+	for (int i = 0; i < MAX_NET_TYPE_CONFIG; i++)
+	{
+		if (0 == m_NetTypes[i])
+			break;
+		if (nAddr == m_NetTypes[i])
+		{
+			result = i;
+			break;
+		}
+	}
+	return result;
+}
+
+bool CClientServerSocket::CheckConnectIP(const std::string& sIP)
+{
+	/*
+var
+  i                 : integer;
+  P                 : PIpRuleNode;
+  sIP               : ansistring;
+begin
+  Result := FDefaultRule <> itdeny;                         // 默认规则
+  sIp := IP + '.';
+  EnterCriticalSection(FCS);
+  try
+    for i := 0 to FIPRuleList.Count - 1 do
+    begin
+      P := FIPRuleList[i];
+      if Pos(P^.matchIP, sIP) = 1 then
+      begin
+        case P^.IPType of
+          itDeny: Result := False;
+          itAllow, itMaster:
+            begin
+              Result := True;
+              Break;                                        // 只要允许，就开启
+            end;
+        else
+        end;
+      end;
+    end;
+  finally
+    LeaveCriticalSection(FCS);
+  end;
+  if not Result then
+    Log(IP + ' 连接被禁止', lmtWarning);
+end;
+	*/
 }
 
 CDGClient* CClientServerSocket::OnCreateClientSocket(const std::string& sIP)
@@ -273,17 +458,28 @@ CDGClient* CClientServerSocket::OnCreateClientSocket(const std::string& sIP)
 
 void CClientServerSocket::OnSocketError(void* Sender, int& iErrorCode)
 {
-
+	if (iErrorCode != 10054)
+	{
+		std::string sInfo("Server Socket Error, Code = ");
+		sInfo.append(to_string(iErrorCode));
+		Log(sInfo.c_str(), lmtError);
+	}
+	iErrorCode = 0;
 }
 
 void CClientServerSocket::OnClientConnect(void* Sender)
 {
-	SendDebugString("OnClientConnect");
-}
-
-void CClientServerSocket::OnClientDisconnect(void* Sender)
-{
-	SendDebugString("OnClientDisconnect");
+	CDGClient* client = (CDGClient*)Sender;
+	if (!CheckConnectIP(client->GetRemoteAddress()))
+	{
+		client->OpenWindow(cwMessageBox, 0, "您目前无法进入");
+		client->ForceClose();
+	}
+	else
+	{
+		//G_GateSocket.IsMasterIP(Client.RemoteAddress)
+		client->SetGMIP();
+	}
 }
 
 /************************End Of CClientServerSocket****************************************************/

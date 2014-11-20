@@ -36,15 +36,16 @@ void CMainThread::CheckConfig(const unsigned long ulTick)
 	if ((0 == m_ulCheckConfigTick) || (ulTick - m_ulCheckConfigTick >= 30 * 1000))
 	{
 		m_ulCheckConfigTick = ulTick;	
-		int iAge = CC_UTILS::GetFileAge(G_ConfigFileName);
-		if (iAge != m_iConfigFileAge)
+		std::string sConfigFileName(G_CurrentExePath + "config.ini");
+		int iAge = CC_UTILS::GetFileAge(sConfigFileName);
+		if ((iAge != -1) && (iAge != m_iConfigFileAge))
 		{
 			if (m_iConfigFileAge > 0)
 				Log("Reload Config File...", lmtMessage);
 
 			m_iConfigFileAge = iAge;
 			CWgtIniFile* pIniFileParser = new CWgtIniFile();
-			pIniFileParser->loadFromFile(G_ConfigFileName);
+			pIniFileParser->loadFromFile(sConfigFileName);
 			try
 			{
 				/*

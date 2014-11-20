@@ -15,6 +15,7 @@
 #include <string>
 #include <iostream>
 #include <vector>
+#include <list>
 
 #include "CCUtils.h"
 #include "CCTcpSocketCommon.h"

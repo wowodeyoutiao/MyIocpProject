@@ -35,6 +35,8 @@ public:
 	int SendText(const std::string& s);
 	void IocpSendback(int iTransfered);
 	bool IocpReadback(int iTransfered);
+
+	std::string GetRemoteAddress();
 protected:
 	virtual void Execute(unsigned long ulTick){}
 	virtual void SocketRead(const char* pBuf, int iCount){}

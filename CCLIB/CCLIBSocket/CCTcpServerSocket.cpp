@@ -331,6 +331,11 @@ CClientConnector :: ~CClientConnector()
 	Clear();
 }
 
+std::string CClientConnector::GetRemoteAddress()
+{
+	return m_sRemoteAddress;
+}
+
 void CClientConnector :: Close()
 {
 	SOCKET s = m_Socket;
