@@ -314,6 +314,27 @@ bool CClientServerSocket::IsMasterIP(std::string& sIP)
 
 void CClientServerSocket::SMSelectServer(int iSocketHandle, char* pBuf, unsigned short usBufLen)
 {
+	if (usBufLen = sizeof(TNextGateInfo))
+	{
+		std::lock_guard<std::mutex> guard(m_LockCS);
+		CDGClient* pClient = (CDGClient*)ValueOf(iSocketHandle);
+		if (pClient != nullptr)
+		{
+			if ((0 == ((PNextGateInfo)pBuf)->iGateAddr) || (0 == ((PNextGateInfo)pBuf)->iGatePort))
+			{
+				pClient->OpenWindow(cwMessageBox, 0, "目前服务器处于维护中！！");
+				pClient->ForceClose();
+			}
+			else
+			{
+				pClient->SendToClient(CM_SELECT_SERVER, pBuf, usBufLen);
+			}
+		}
+	}
+	else
+	{
+		Log("SM_SELECT_SERVER Response: invalid length=", lmtWarning);
+	}
 }
 
 TIpType CClientServerSocket::GetDefaultRule()

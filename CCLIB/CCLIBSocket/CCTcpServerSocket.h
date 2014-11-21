@@ -153,6 +153,8 @@ protected:
     void* ValueOf(const int iKey);  
 	void SetMaxCorpseTime(const int iTime){ m_iMaxCorpseTime = iTime; }
 	void SetMaxBlockSize(const int iSize){ m_iMaxBlockSize = iSize; }
+protected:
+	std::mutex m_LockCS;                     // 临界区操作使用的互斥锁，子类特殊条件会使用
 private: 
 	void DoReady(void* Sender);
 	void DoSocketClose(void* Sender);
@@ -167,7 +169,6 @@ private:
 	CMainIOCPWorker* m_MainWorker;           // 主工作对象，负责Accept，和管理收发子线程组
 	int m_iMaxCorpseTime;				     //	客户端和服务器无通信的最长维护时间--否则断线
 	int m_iMaxBlockSize;					 // 客户端阻塞后，服务器为该客户端的阻塞缓冲区最大值--否则断线
-	std::mutex m_LockCS;                     // 临界区操作使用的互斥锁
 	bool m_bDelayFree;                       // 处理延时释放客户端连接的标记
 	PDelayFreeNode m_DFNFirst;               // 延时释放的头节点
 	PDelayFreeNode m_DFNLast;				 // 延时释放的尾节点

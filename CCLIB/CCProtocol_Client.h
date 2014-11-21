@@ -107,7 +107,7 @@ typedef struct _TCMSelectServer
 	int iCheckIP;                    // 所解析的 固定域名的 地址，用以区分不同的网络类型
 }TCMSelectServer, *PCMSelectServer;
 
-//CM_CLOSE_WINDOW、SCM_OPEN_WINDOW、SCM_CLOSE_WINDOW
+// CM_CLOSE_WINDOW、SCM_OPEN_WINDOW、SCM_CLOSE_WINDOW
 typedef struct _TClientWindowRec
 {
 	TClientWindowType WinType;
@@ -115,6 +115,16 @@ typedef struct _TClientWindowRec
 	unsigned long TransID;          // 事务ID
 	//buf:提示信息字符串
 }TClientWindowRec, *PClientWindowRec;
+
+// SCM_SELECT_AREA
+typedef struct _TNextGateInfo
+{
+	int iSessionID;
+	int iGateAddr;
+	int iGatePort;
+}TNextGateInfo, *PNextGateInfo;
+
+
 
 const int CS_SEGMENTATION_CLIENTSIGN = 0XAABBCCDD;          // 游戏客户端和服务器间通讯协议起始标志
 

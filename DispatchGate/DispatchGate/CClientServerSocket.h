@@ -40,13 +40,13 @@ public:
 	int GetEncodeIdx();
 	int GetClientType();
 	unsigned char GetNetType();
+	void SendToClient(unsigned short usIdent, char* pData, unsigned short usDataLen);
 protected:
 	virtual void Execute(unsigned long ulTick);
 	virtual void SocketRead(const char* pBuf, int iCount);
 private:
 	void CMSelectServer(char* pBuf, unsigned short usBufLen);
 	void CMCloseWindow(char* pBuf, unsigned short usBufLen);
-	void SendToClient(unsigned short usIdent, char* pData, unsigned short usDataLen);
 	void ProcessReceiveMsg(char* pHeader, char* pData, int iDataLen);
 private:
 	unsigned long m_ulLastConnectTick;
