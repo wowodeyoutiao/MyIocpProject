@@ -291,9 +291,9 @@ bool CClientServerSocket::IsMasterIP(std::string& sIP)
 	bool retFlag = false;
 	std::string sTempIP(sIP);
 	sTempIP.append(".");	
+
 	PIpRuleNode pNode;
 	std::list<PIpRuleNode>::iterator vIter;
-
 	std::lock_guard<std::mutex> guard(m_IPRuleLockCS);
 	for (vIter = m_IPRuleList.begin(); vIter != m_IPRuleList.end(); ++vIter)
 	{
@@ -385,7 +385,8 @@ void CClientServerSocket::AddIpRuleNode(const std::string& sIP, TIpType ipType)
 	std::lock_guard<std::mutex> guard(m_IPRuleLockCS);
 	PIpRuleNode pNode = new TIpRuleNode;
 	pNode->ipType = ipType;
-	pNode->sMatchIP = sIP;		
+	pNode->sMatchIP = sIP;
+	m_IPRuleList.push_back(pNode);
 }
 
 /*
@@ -415,39 +416,43 @@ unsigned short CClientServerSocket::GetNetType(int nAddr)
 
 bool CClientServerSocket::CheckConnectIP(const std::string& sIP)
 {
-	/*
-var
-  i                 : integer;
-  P                 : PIpRuleNode;
-  sIP               : ansistring;
-begin
-  Result := FDefaultRule <> itdeny;                         // 默认规则
-  sIp := IP + '.';
-  EnterCriticalSection(FCS);
-  try
-    for i := 0 to FIPRuleList.Count - 1 do
-    begin
-      P := FIPRuleList[i];
-      if Pos(P^.matchIP, sIP) = 1 then
-      begin
-        case P^.IPType of
-          itDeny: Result := False;
-          itAllow, itMaster:
-            begin
-              Result := True;
-              Break;                                        // 只要允许，就开启
-            end;
-        else
-        end;
-      end;
-    end;
-  finally
-    LeaveCriticalSection(FCS);
-  end;
-  if not Result then
-    Log(IP + ' 连接被禁止', lmtWarning);
-end;
-	*/
+	bool retFlag = (m_DefaultRule != itDeny);
+	std::string sTempIP(sIP);
+	sTempIP.append(".");
+
+	PIpRuleNode pNode;
+	std::list<PIpRuleNode>::iterator vIter;
+	std::lock_guard<std::mutex> guard(m_IPRuleLockCS);
+	for (vIter = m_IPRuleList.begin(); vIter != m_IPRuleList.end(); ++vIter)
+	{
+		pNode = (PIpRuleNode)*vIter;
+		//--------------------------------------
+		//--------------------------------------
+		//这个判断需要调试检验一下
+		if (sTempIP.find(pNode->sMatchIP) == 1)
+		{
+			switch (pNode->ipType)
+			{
+			case itDeny:
+				retFlag = false;
+				break;
+			case itAllow:
+			case itMaster:
+				retFlag = true;
+				break;
+			default:
+				retFlag = false;
+				break;
+			}
+		}
+	}
+
+	if (!retFlag)
+	{
+		std::string sTemp(sIP + " 连接被禁止!");
+		Log(sTemp.c_str(), lmtWarning);
+	}
+	return retFlag;
 }
 
 CDGClient* CClientServerSocket::OnCreateClientSocket(const std::string& sIP)
@@ -477,8 +482,10 @@ void CClientServerSocket::OnClientConnect(void* Sender)
 	}
 	else
 	{
-		//G_GateSocket.IsMasterIP(Client.RemoteAddress)
-		client->SetGMIP();
+		//-------------------------------------------------------------
+		//-------------------------------------------------------------
+		//-------------------------------------------------------------
+		client->SetGMIP(/*G_GateSocket.IsMasterIP(Client.RemoteAddress)*/"");
 	}
 }
 
