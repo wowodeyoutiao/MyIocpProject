@@ -7,20 +7,6 @@
 
 #include "stdafx.h"
 
-enum TIpType
-{
-	itUnKnow, 
-	itAllow,
-	itDeny,
-	itMaster
-};
-
-typedef struct _TIpRuleNode
-{
-	std::string sMatchIP;
-	TIpType ipType;
-}TIpRuleNode, *PIpRuleNode;
-
 /**
 *
 * DispatchGate监听的单个客户端连接对象
@@ -40,7 +26,7 @@ public:
 	int GetEncodeIdx();
 	int GetClientType();
 	unsigned char GetNetType();
-	void SendToClient(unsigned short usIdent, char* pData, unsigned short usDataLen);
+	void SendToClientPeer(unsigned short usIdent, char* pData, unsigned short usDataLen);
 protected:
 	virtual void Execute(unsigned long ulTick);
 	virtual void SocketRead(const char* pBuf, int iCount);

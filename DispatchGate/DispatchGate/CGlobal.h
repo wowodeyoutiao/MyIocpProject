@@ -9,6 +9,21 @@
 
 using namespace std;
 
+enum TIpType
+{
+	itUnKnow,
+	itAllow,
+	itDeny,
+	itMaster
+};
+
+typedef struct _TIpRuleNode
+{
+	std::string sMatchIP;
+	TIpType ipType;
+}TIpRuleNode, *PIpRuleNode;
+
+
 //日志等级---全局常量在.h文件声明定义
 const int lmtMessage = 0;
 const int lmtWarning = 1;

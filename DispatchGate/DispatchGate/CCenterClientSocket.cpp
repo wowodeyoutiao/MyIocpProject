@@ -60,7 +60,7 @@ void CCenterClientSocket::LoadConfig(CWgtIniFile* pIniFileParser)
 		Log("CenterServer Œ¥≈‰÷√!", lmtError);
 }
 
-void CCenterClientSocket::SendToServer(unsigned short usIdent, int iParam, char* pBuf, unsigned short usBufLen)
+void CCenterClientSocket::SendToServerPeer(unsigned short usIdent, int iParam, char* pBuf, unsigned short usBufLen)
 {
 	int iDataLen = sizeof(TServerSocketHeader) + usBufLen;
 	char* pData = (char*)malloc(iDataLen);
@@ -105,7 +105,7 @@ void CCenterClientSocket::DoHeartBeat()
 			else
 			{
 				//-------------------
-				//SendToServer(SM_PING, G_DBSocket.PlayerTotalCount, nullptr, 0);
+				//SendToServerPeer(SM_PING, G_DBSocket.PlayerTotalCount, nullptr, 0);
 				//-------------------
 				m_iPingCount += 1;
 			}
@@ -221,7 +221,7 @@ void CCenterClientSocket::SendRegisterServer()
 		nPort := G_GateSocket.Port;
 	  end;
 	*/
-	SendToServer(SM_REGISTER, 0, (char*)&address, sizeof(TServerAddress));
+	SendToServerPeer(SM_REGISTER, 0, (char*)&address, sizeof(TServerAddress));
 }
 
 /************************End Of CCenterClientSocket********************************************/

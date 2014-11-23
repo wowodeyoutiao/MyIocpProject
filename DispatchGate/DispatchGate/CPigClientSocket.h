@@ -18,7 +18,7 @@ public:
 	CPigClientSocket();
 	virtual ~CPigClientSocket();
 	void LoadConfig(CWgtIniFile* pIniFileParser);
-	void SendToServer(unsigned short usIdent, int iParam, char* pBuf, unsigned short usBufLen);
+	void SendToServerPeer(unsigned short usIdent, int iParam, char* pBuf, unsigned short usBufLen);
 	void DoHeartBeat();
 protected: 
 	virtual void ProcessReceiveMsg(PServerSocketHeader pHeader, const char* pData, int iDataLen);

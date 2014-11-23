@@ -80,7 +80,7 @@ void CDGClient::ProcessReceiveMsg(char* pHeader, char* pData, int iDataLen)
 	switch (((PClientSocketHead)pHeader)->usIdent)
 	{
 	case CM_PING:
-		SendToClient(CM_PING, nullptr, 0);
+		SendToClientPeer(CM_PING, nullptr, 0);
 		break;
 	case CM_SELECT_SERVER_OLD:
 		OpenWindow(cwMessageBox, 0, "客户端版本不正确，请先更新！");
@@ -143,7 +143,7 @@ void CDGClient::OpenWindow(TClientWindowType wtype, int iParam, const std::strin
 			memcpy((void*)pData[sizeof(TClientWindowRec)], msg.c_str(), iStrLen);
 			pData[iDataLen - 1] = '\0';
 		}
-		SendToClient(SCM_OPEN_WINDOW, pData, iDataLen);
+		SendToClientPeer(SCM_OPEN_WINDOW, pData, iDataLen);
 		free(pData);
 	}
 	catch (...)
@@ -199,7 +199,7 @@ void CDGClient::CMSelectServer(char* pBuf, unsigned short usBufLen)
 			}
 		}
 		if (address.iPort > 0)
-			SendToClient(SCM_RESSERVER_INFO, (char*)&address, sizeof(TServerAddress));
+			SendToClientPeer(SCM_RESSERVER_INFO, (char*)&address, sizeof(TServerAddress));
 	}
 }
 
@@ -217,7 +217,7 @@ void CDGClient::CMCloseWindow(char* pBuf, unsigned short usBufLen)
 	}
 }
 
-void CDGClient::SendToClient(unsigned short usIdent, char* pData, unsigned short usDataLen)
+void CDGClient::SendToClientPeer(unsigned short usIdent, char* pData, unsigned short usDataLen)
 {
 	unsigned short usBufLen = sizeof(TClientSocketHead)+usDataLen;
 	char* pBuf = (char*)malloc(usBufLen);
@@ -327,7 +327,7 @@ void CClientServerSocket::SMSelectServer(int iSocketHandle, char* pBuf, unsigned
 			}
 			else
 			{
-				pClient->SendToClient(CM_SELECT_SERVER, pBuf, usBufLen);
+				pClient->SendToClientPeer(CM_SELECT_SERVER, pBuf, usBufLen);
 			}
 		}
 	}
@@ -369,7 +369,44 @@ void CClientServerSocket::CheckIpConfig(unsigned long ulTick)
 
 void CClientServerSocket::LoadIpConfigFile(const std::string& sFileName)
 {
-
+	/*
+var
+  i                 : integer;
+  tmpList           : TStringList;
+  key, value        : ansistring;
+begin
+  tmpList := TStringList.Create;
+  tmpList.Delimiter := '=';
+  tmpList.LoadFromFile(FileName);
+  FDefaultRule := itAllow;
+  Clear;                                                    // 清除原有的规则
+  for i := 0 to tmpList.Count - 1 do
+  begin
+    key := Trim(tmpList.Names[i]);
+    value := Trim(tmpList.ValueFromIndex[i]);
+    if CompareText(key, 'WarWarning') = 0 then
+    begin
+      FWar_Warning := Value;
+    end
+    else if CompareText(key, 'GameMaster') = 0 then
+    begin
+      AddIpRuleNode(Value, itMaster);
+    end
+    else if CompareText(key, 'Deny') = 0 then
+    begin
+      if CompareText(value, 'All') = 0 then
+        FDefaultRule := itDeny
+      else
+        AddIpRuleNode(Value, itDeny);
+    end
+    else if CompareText(key, 'Allow') = 0 then
+    begin
+      AddIpRuleNode(Value, itAllow);
+    end;
+  end;
+  tmpList.Free;
+end;
+	*/
 }
 
 void CClientServerSocket::Clear()

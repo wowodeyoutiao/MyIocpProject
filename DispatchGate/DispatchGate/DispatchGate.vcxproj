@@ -82,6 +82,7 @@
   <ItemGroup>
     <ClInclude Include="CCenterClientSocket.h" />
     <ClInclude Include="CClientServerSocket.h" />
+    <ClInclude Include="CDBServerSocket.h" />
     <ClInclude Include="CGlobal.h" />
     <ClInclude Include="CMainThread.h" />
     <ClInclude Include="CPigClientSocket.h" />
@@ -103,6 +104,7 @@
     </ClCompile>
     <ClCompile Include="CCenterClientSocket.cpp" />
     <ClCompile Include="CClientServerSocket.cpp" />
+    <ClCompile Include="CDBServerSocket.cpp" />
     <ClCompile Include="CGlobal.cpp" />
     <ClCompile Include="CMainThread.cpp" />
     <ClCompile Include="CPigClientSocket.cpp" />

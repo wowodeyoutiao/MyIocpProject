@@ -19,7 +19,7 @@ public:
 	CCenterClientSocket();
 	virtual ~CCenterClientSocket();
 	void LoadConfig(CWgtIniFile* pIniFileParser);
-	void SendToServer(unsigned short usIdent, int iParam, char* pBuf, unsigned short usBufLen);
+	void SendToServerPeer(unsigned short usIdent, int iParam, char* pBuf, unsigned short usBufLen);
 	void DoHeartBeat();					    // ·¢ËÍÐÄÌø
 protected:
 	virtual void ProcessReceiveMsg(PServerSocketHeader pHeader, const char* pData, int iDataLen);
