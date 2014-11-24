@@ -6,6 +6,8 @@
 #define __CC_DB_SERVER_SOCKET_H__
 
 #include "CCTcpServerSocket.h"
+#include "CClientServerSocket.h"
+#include "CPigClientSocket.h"
 
 /**
 *
@@ -16,7 +18,7 @@ class CDBConnector : public CClientConnector
 {
 public:
 	CDBConnector();
-	~CDBConnector();
+	virtual ~CDBConnector();
 	int GetServerID();
 	int GetPlayerCount();
 	void SendToClientPeer(unsigned short usIdent, int iParam, char* pBuf, unsigned short usBufLen);
@@ -47,17 +49,46 @@ private:
 */
 class CDBServerSocket : public CIOCPServerSocketManager
 {
+	std::hash<std::string> myhash;
+/*
 public:
-	CDBServerSocket();
+	CDBServerSocket(const std::string& sName);
 	virtual ~CDBServerSocket();
+	void LoadConfig(CWgtIniFile* pIniFileParser);
+	int SelectServer(CDGClient &client);
+	void SendSelectServer(CDGClient &client);
+	void SendAreaInfoToPig(CPigClientSocket &pigClient);
+	void SendPigMsg(const char* pBuf, unsigned short usBufLen);
+	int GetPlayerTotalCount();
 protected:
 	virtual void DoActive();
 private:
 	bool OnCheckIPAddress(const std::string& sIP);
-	CDBConnector* OnCreateClientSocket(const std::string& sIP);
+	CClientConnector* OnCreateClientSocket(const std::string& sIP);
 	void OnSocketError(void* Sender, int& iErrorCode);
 	void OnClientConnect(void* Sender);
 	void OnClientDisconnect(void* Sender);
+	void OnSetListView(void* Sender);
+
+	void LoadAreaConfig();
+	bool RegisterDBServer(const std::string &sAddress, int iServerID, CDBConnector &dbServer);
+	void ShowDBMsg(int iServerID, int iCol, const std::string &msg);
+	std::string OnLineDBServer(int iServerID);
+
+	//-----------------------------
+	//-----------------------------
+	//-----------------------------
+	//procedure RemoveServerInfo(Pvalue: Pointer; const Key: ansistring);
+	//procedure EnumAreaConfig(ElName: string; Elem: TlkJSONbase;data: pointer; var Continue: Boolean);
+private:
+	std::string m_sAllowDBServerIP;				// 允许的IP
+	int m_iSessionID;           
+	std::string m_sServerName;
+	int m_iConfigFileAge;
+	unsigned long m_ulLastCheckTick;
+	//FLogSocket: TLogSocket;
+	//FServerList: TNamesHash;                  //  区组列表 
+*/
 };
 
 #endif //__CC_DB_SERVER_SOCKET_H__

@@ -130,7 +130,7 @@ void CDBConnector::SocketRead(const char* pBuf, int iCount)
 	{
 		std::string temps("TDBServer Socket Read Error, Code = ");
 		temps.append(to_string(iErrorCode));
-		Log(temps.c_str(), lmtError);
+		Log(temps, lmtError);
 	}
 }
 
@@ -160,7 +160,7 @@ void CDBConnector::ProcessReceiveMsg(PServerSocketHeader pHeader, const char* pD
 	default:
 		std::string temps("收到未知DBServer协议，Ident=");
 		temps.append(to_string(pHeader->usIdent));
-		Log(temps.c_str(), lmtWarning);
+		Log(temps, lmtWarning);
 		break;
 	}
 }
@@ -186,13 +186,13 @@ void CDBConnector::RegisterDBServer(int iServerID)
 		std::string sTemp("DBServer ");
 		sTemp.append(to_string(m_iServerID));
 		sTemp.append(" Enabled.");
-		Log(sTemp.c_str(), lmtMessage);
+		Log(sTemp, lmtMessage);
 	}
 	else
 	{
 		std::string sTemp("没配置的DBServer:  ");
 		sTemp.append(to_string(m_iServerID));
-		Log(sTemp.c_str(), lmtWarning);
+		Log(sTemp, lmtWarning);
 		Close();
 	}
 }
@@ -228,8 +228,8 @@ void CDBConnector::ReceiveConfig(int iParam, const char* pBuf, unsigned short us
 			//--------------------------------------
 			//--------------------------------------
 			//--------------------------------------
-			//确认一下！！！
-			m_sDenyHint.assign(pBuf[0], pBuf[usBufLen-1]);
+			//这里的长度需要注意！！！
+			m_sDenyHint.assign(pBuf, usBufLen);
 		break;
 	case 2:													//禁止IP列表
 		//最高位为1表示清除所有
@@ -240,7 +240,8 @@ void CDBConnector::ReceiveConfig(int iParam, const char* pBuf, unsigned short us
 		}
 		if (usBufLen > 0)
 		{
-			std::string sTemp(pBuf[0], pBuf[usBufLen-1]);
+			std::string sTemp;
+			sTemp.assign(pBuf, usBufLen);
 			AddIpRuleNode(sTemp, itDeny);
 		}
 		break;
@@ -250,7 +251,8 @@ void CDBConnector::ReceiveConfig(int iParam, const char* pBuf, unsigned short us
 			ClearIPRule(itAllow);
 		if (usBufLen > 0)
 		{
-			std::string sTemp(pBuf[0], pBuf[usBufLen - 1]);
+			std::string sTemp;
+			sTemp.assign(pBuf, usBufLen);
 			AddIpRuleNode(sTemp, itAllow);
 		}
 		break;

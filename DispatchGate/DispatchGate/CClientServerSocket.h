@@ -16,7 +16,7 @@ class CDGClient : public CClientConnector
 {
 public:
 	CDGClient();
-	~CDGClient();
+	virtual ~CDGClient();
 	void ForceClose();
 	void OpenWindow(TClientWindowType wtype, int iParam, const std::string& msg = "");
 	unsigned short GetSelectMaskServerID();
@@ -71,7 +71,7 @@ private:
 	unsigned short GetNetType(int nAddr); 
 	bool CheckConnectIP(const std::string& sIP);
 
-	CDGClient* OnCreateClientSocket(const std::string& sIP);
+	CClientConnector* OnCreateClientSocket(const std::string& sIP);
 	void OnSocketError(void* Sender, int& iErrorCode);
 	void OnClientConnect(void* Sender);
 private:

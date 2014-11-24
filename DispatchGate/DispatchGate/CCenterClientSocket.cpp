@@ -122,7 +122,7 @@ void CCenterClientSocket::OnSocketConnect(void* Sender)
 	std::string temps("与CCenterClientSocket(");
 	temps.append(m_Address);
 	temps.append(")连接成功");
-	Log(temps.c_str());
+	Log(temps);
 	SendRegisterServer();
 }
 
@@ -131,7 +131,7 @@ void CCenterClientSocket::OnSocketDisconnect(void* Sender)
 	std::string temps("与CCenterClientSocket(");
 	temps.append(m_Address);
 	temps.append(")断开连接");
-	Log(temps.c_str());
+	Log(temps);
 }
 
 void CCenterClientSocket::OnSocketRead(void* Sender, const char* pBuf, int iCount)
@@ -144,7 +144,7 @@ void CCenterClientSocket::OnSocketRead(void* Sender, const char* pBuf, int iCoun
 	{
 		std::string temps("CCenterClientSocket Socket Read Error, Code = ");
 		temps.append(to_string(iErrorCode));
-		Log(temps.c_str(), lmtError);
+		Log(temps, lmtError);
 	}
 }
 
@@ -175,7 +175,7 @@ void CCenterClientSocket::ProcessReceiveMsg(PServerSocketHeader pHeader, const c
 	default:
 		std::string temps("收到未知CenterServer协议，Ident=");
 		temps.append(to_string(pHeader->usIdent));
-		Log(temps.c_str(), lmtWarning);
+		Log(temps, lmtWarning);
 		break;
 	}
 }
@@ -184,7 +184,7 @@ void CCenterClientSocket::OnSocketError(void* Sender, int& iErrorCode)
 {
 	std::string temps("CCenterClientSocket Socket Error, Code = ");
 	temps.append(to_string(iErrorCode));
-	Log(temps.c_str(), lmtError);
+	Log(temps, lmtError);
 	iErrorCode = 0;
 }
 
@@ -204,7 +204,7 @@ void CCenterClientSocket::Reconnect()
 			temps.append(":");
 			temps.append(to_string(m_Port));
 			temps.append(")");
-			Log(temps.c_str(), lmtError);
+			Log(temps, lmtError);
 			Open();
 		}
 	}

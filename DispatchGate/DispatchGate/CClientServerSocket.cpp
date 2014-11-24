@@ -172,7 +172,7 @@ void CDGClient::CMSelectServer(char* pBuf, unsigned short usBufLen)
 		OpenWindow(cwMessageBox, 0, "选择服务器失败");
 		std::string temps("选服务器失败: Area = ");
 		temps.append(to_string(m_usSelectMaskServerID));
-		Log(temps.c_str());
+		Log(temps);
 		return;
 	}
 
@@ -280,7 +280,7 @@ void CClientServerSocket::LoadConfig(CWgtIniFile* pIniFileParser)
 			m_iListenPort = iPort;
 			sTemp = "接受客户端连接, Port = ";
 			sTemp.append(to_string(iPort));
-			Log(sTemp.c_str(), lmtMessage);
+			Log(sTemp, lmtMessage);
 			Open();
 		}
 	}
@@ -508,12 +508,12 @@ bool CClientServerSocket::CheckConnectIP(const std::string& sIP)
 	if (!retFlag)
 	{
 		std::string sTemp(sIP + " 连接被禁止!");
-		Log(sTemp.c_str(), lmtWarning);
+		Log(sTemp, lmtWarning);
 	}
 	return retFlag;
 }
 
-CDGClient* CClientServerSocket::OnCreateClientSocket(const std::string& sIP)
+CClientConnector* CClientServerSocket::OnCreateClientSocket(const std::string& sIP)
 {
 	SendDebugString("OnCreateClientSocket");
 	return new CDGClient;
@@ -525,7 +525,7 @@ void CClientServerSocket::OnSocketError(void* Sender, int& iErrorCode)
 	{
 		std::string sInfo("Server Socket Error, Code = ");
 		sInfo.append(to_string(iErrorCode));
-		Log(sInfo.c_str(), lmtError);
+		Log(sInfo, lmtError);
 	}
 	iErrorCode = 0;
 }

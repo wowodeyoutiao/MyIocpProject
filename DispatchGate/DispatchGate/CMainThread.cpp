@@ -102,7 +102,7 @@ void CMainThread::DoExecute()
 /************************End Of CMainThread****************************************************/
 
 
-void Log(const char* str, byte loglv)
+void Log(const std::string& sInfo, byte loglv)
 {
-	SendDebugString(str);
+	SendDebugString(sInfo);
 }

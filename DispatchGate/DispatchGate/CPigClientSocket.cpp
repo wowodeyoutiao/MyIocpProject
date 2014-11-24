@@ -97,7 +97,7 @@ void CPigClientSocket::OnSocketConnect(void* Sender)
 	std::string temps("与PigServer(");
 	temps.append(m_Address);
 	temps.append(")连接成功");
-	Log(temps.c_str());
+	Log(temps);
 }
 
 void CPigClientSocket::OnSocketDisconnect(void* Sender)
@@ -105,7 +105,7 @@ void CPigClientSocket::OnSocketDisconnect(void* Sender)
 	std::string temps("与PigServer(");
 	temps.append(m_Address);
 	temps.append(")断开连接");
-	Log(temps.c_str());
+	Log(temps);
 }
 
 void CPigClientSocket::OnSocketRead(void* Sender, const char* pBuf, int iCount)
@@ -118,7 +118,7 @@ void CPigClientSocket::OnSocketRead(void* Sender, const char* pBuf, int iCount)
 	{
 		std::string temps("CPigClientSocket Socket Read Error, Code = ");
 		temps.append(to_string(iErrorCode));
-		Log(temps.c_str(), lmtError);
+		Log(temps, lmtError);
 	}	
 }
 
@@ -137,7 +137,7 @@ void CPigClientSocket::ProcessReceiveMsg(PServerSocketHeader pHeader, const char
 	default:
 		std::string temps("收到未知PigServer协议，Ident=");
 		temps.append(to_string(pHeader->usIdent));
-		Log(temps.c_str(), lmtWarning);
+		Log(temps, lmtWarning);
 		break;
 	}
 }
@@ -146,7 +146,7 @@ void CPigClientSocket::OnSocketError(void* Sender, int& iErrorCode)
 {
 	std::string temps("CPigClientSocket Socket Error, Code = ");
 	temps.append(to_string(iErrorCode));
-	Log(temps.c_str(), lmtError);
+	Log(temps, lmtError);
 	iErrorCode = 0;
 }
 

@@ -222,13 +222,9 @@ void CMainIOCPWorker :: MakeWorkers()
 	GetSystemInfo(&si);
 	m_iSubThreadCount = si.dwNumberOfProcessors * 2 + 1;
 	m_SubWorkers = new CSubIOCPWorker*[m_iSubThreadCount];
-	std::string temps;
-	char cc[20];
 	for (int i=0; i<m_iSubThreadCount; i++)
 	{
-		_itoa_s(i, cc, 10);
-		temps.assign(cc);
-		m_SubWorkers[i] = new CSubIOCPWorker(&m_hIOCP, m_OnSocketClose, temps);
+		m_SubWorkers[i] = new CSubIOCPWorker(&m_hIOCP, m_OnSocketClose, std::to_string(i));
 		m_SubWorkers[i]->InitialWorkThread();
 	}
 	if (nullptr != m_OnReady)
