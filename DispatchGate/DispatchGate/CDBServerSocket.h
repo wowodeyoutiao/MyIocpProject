@@ -24,11 +24,12 @@ public:
 	bool CheckClientIP(const std::string& sIP);
 protected:
 	virtual void SocketRead(const char* pBuf, int iCount);
+	virtual void ProcessReceiveMsg(PServerSocketHeader pHeader, const char* pData, int iDataLen);
 private:
 	void SendHeartBeat(int iCount);                // 心跳返回
 	void RegisterDBServer(int iServerID);          // 注册DBServer
 	void ClearIPRule(TIpType ipType);
-	void ReceiveConfig(int iParam, char* pBuf, unsigned short usBufLen);
+	void ReceiveConfig(int iParam, const char* pBuf, unsigned short usBufLen);
 private:
 	int m_iServerID;                //服务器实际区号
 	int m_iPlayerCount;             //DB上的玩家数量
@@ -38,7 +39,6 @@ private:
 	std::mutex m_IPRuleLockCS;			   //iprule链表的临界区操作使用的互斥锁
 	std::list<PIpRuleNode> m_IPRuleList;   //iprule链表
 };
-
 
 /**
 *

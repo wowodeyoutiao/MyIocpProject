@@ -9,6 +9,7 @@
 #include <list>
 #include "CCUtils.h"
 #include "CCTcpSocketCommon.h"
+#include "CCProtocol_Server.h"
 
 //用于管理延时释放客户端的链表结构
 typedef struct _TDelayFreeNode
@@ -35,11 +36,12 @@ public:
 	int SendText(const std::string& s);
 	void IocpSendback(int iTransfered);
 	bool IocpReadback(int iTransfered);
-
 	std::string GetRemoteAddress();
 protected:
 	virtual void Execute(unsigned long ulTick){}
 	virtual void SocketRead(const char* pBuf, int iCount){}
+	int ParseSocketReadData(int iType, const char* pBuf, int iCount);                                     //由子类覆盖的SocketRead函数调用
+	virtual void ProcessReceiveMsg(PServerSocketHeader pHeader, const char* pData, int iDataLen){};       //处理具体的消息包数据，子类实现
 private:
 	void UpdateActive();
 	void Clear();
@@ -64,6 +66,7 @@ private:
 	unsigned long m_ulActiveTick;
 	unsigned long m_ulLastSendTick;
 	unsigned long m_ulBufferFullTick;	// 客户端发送缓冲区堆积满数据多久后踢掉
+	CC_UTILS::PBufferStream m_pReceiveBuffer;      // 处理socket数据接收的buffer
 friend class CIOCPServerSocketManager;
 };
 
@@ -100,7 +103,7 @@ class CMainIOCPWorker : public CExecutableBase
 public:
 	CMainIOCPWorker(void* parent);
 	~CMainIOCPWorker();				
-	void DoExecute();					
+	void DoExecute();
 private:
     void MakeWorkers();
     void Close();

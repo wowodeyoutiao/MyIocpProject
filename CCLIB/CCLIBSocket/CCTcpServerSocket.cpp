@@ -323,12 +323,16 @@ CClientConnector :: CClientConnector():m_Socket(INVALID_SOCKET), m_sRemoteAddres
 	memset(&m_SendBlock, 0, sizeof(m_SendBlock));
 	memset(&m_RecvBlock, 0, sizeof(m_RecvBlock));
 	m_SendList.DoInitial(SEND_NODE_CACHE_SIZE);
+	m_pReceiveBuffer = new CC_UTILS::TBufferStream;
+	m_pReceiveBuffer->Initialize();
 }
 
 CClientConnector :: ~CClientConnector()
 {
 	Close();
 	Clear();
+	m_pReceiveBuffer->Finalize();
+	delete(m_pReceiveBuffer);
 }
 
 std::string CClientConnector::GetRemoteAddress()
@@ -540,6 +544,48 @@ bool CClientConnector :: IsBlock(int iMaxBlockSize)
 		m_ulBufferFullTick = 0;
 	}
 	return retflag;
+}
+
+int CClientConnector::ParseSocketReadData(int iType, const char* pBuf, int iCount)
+{
+	m_pReceiveBuffer->Write(pBuf, iCount);
+	char* pTempBuf = (char*)m_pReceiveBuffer->GetMemPoint();
+	int iTempBufLen = m_pReceiveBuffer->GetPosition();
+	int iErrorCode = 0;
+	int iOffset = 0;
+	int iPackageLen = 0;
+	PServerSocketHeader pHeader = nullptr;
+	while (iTempBufLen - iOffset >= sizeof(TServerSocketHeader))
+	{
+		pHeader = (PServerSocketHeader)pTempBuf;
+		if (SS_SEGMENTATION_SIGN == pHeader->ulSign)
+		{
+			iPackageLen = sizeof(TServerSocketHeader)+pHeader->usBehindLen;
+			//单个数据包超长后扔掉
+			if (iPackageLen >= MAXWORD)
+			{
+				iOffset = iTempBufLen;
+				iErrorCode = 1;
+				break;
+			}
+			//加载m_pReceiveBuffer数据时，解析最新的包长度iPackageLen在当前位移iOffset上超出iTempBufLen
+			if (iOffset + iPackageLen > iTempBufLen)
+				break;
+			//处理收到的数据包，子类实现
+			ProcessReceiveMsg(pHeader, pTempBuf + sizeof(TServerSocketHeader), pHeader->usBehindLen);
+			//移动指针，继续加载socket读入的数据
+			iOffset += iPackageLen;
+			pTempBuf += iPackageLen;
+		}
+		else
+		{	//向下寻找包头
+			iErrorCode = 2;
+			iOffset += 1;
+			pTempBuf += 1;
+		}
+	}
+	m_pReceiveBuffer->Reset(iOffset);
+	return iErrorCode;
 }
 
 /************************Start Of CClientConnector**************************************************/

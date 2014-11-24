@@ -43,6 +43,13 @@ const int SM_PING = 0x1002;								            // 心跳检测
 
 const int SM_SERVER_CONFIG = 0x1005;                                // 配置信息
 
+const int SM_SELECT_SERVER = 0x2001;                                // 选服请求
+const int SM_PLAYER_CONNECT = 0x2002;                               // 玩家连接
+const int SM_PLAYER_DISCONNECT = 0x2003;                            // 玩家断线
+const int SM_PLAYER_MSG = 0x2004;                                   // 玩家的消息
+const int SM_MULPLAYER_MSG = 0x2005;                                // 群发的消息
+
+
 //PigServer相关协议
 const int SM_PIG_MSG = 0x3001;		     						    //中转Pig消息
 const int SM_PIG_QUERY_AREA = 0x3002;                               //查询区组信息
