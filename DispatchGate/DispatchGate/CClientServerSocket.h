@@ -58,7 +58,7 @@ public:
 	CClientServerSocket();
 	virtual ~CClientServerSocket();
 	void LoadConfig(CWgtIniFile* pIniFileParser);
-	bool IsMasterIP(std::string& sIP);
+	bool IsMasterIP(std::string &sIP);
 	void SMSelectServer(int iSocketHandle, char* pBuf, unsigned short usBufLen);  // 返回选服信息
 	TIpType GetDefaultRule();
 protected:

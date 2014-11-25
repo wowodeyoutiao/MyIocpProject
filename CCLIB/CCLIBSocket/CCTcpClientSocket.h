@@ -87,8 +87,8 @@ public:
     int m_Port;							// 远端port
 	int m_TotalBufferlen;               // buffer总长度
 protected:
-	int ParseSocketReadData(int iType, const char* pBuf, int iCount);          //由子类的onsocketread调用
-	virtual void ProcessReceiveMsg(PServerSocketHeader pHeader, const char* pData, int iDataLen) = 0;       //处理具体的消息包数据，子类实现
+	int ParseSocketReadData(int iType, const char* pBuf, int iCount);                                //由子类的onsocketread调用
+	virtual void ProcessReceiveMsg(PServerSocketHeader pHeader, const char* pData, int iDataLen){};  //处理具体的消息包数据，子类实现
 private:
 	bool DoInitialize();
 	bool DoError(TSocketErrorType seType);

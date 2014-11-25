@@ -286,7 +286,7 @@ void CClientServerSocket::LoadConfig(CWgtIniFile* pIniFileParser)
 	}
 }
 
-bool CClientServerSocket::IsMasterIP(std::string& sIP)
+bool CClientServerSocket::IsMasterIP(std::string &sIP)
 {
 	bool retFlag = false;
 	std::string sTempIP(sIP);
