@@ -49,7 +49,6 @@ private:
 */
 class CDBServerSocket : public CIOCPServerSocketManager
 {
-	std::hash<std::string> myhash;
 /*
 public:
 	CDBServerSocket(const std::string& sName);
