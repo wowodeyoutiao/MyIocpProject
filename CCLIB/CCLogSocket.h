@@ -31,6 +31,13 @@ namespace CC_UTILS{
 	const int DEFAULT_SERVICE_PORT = 7822;                    // Service  -> Monitor Center   ?????????????????????????
 	const int DEFAULT_MONITOR_PORT = 7823;                    // Viewer  -> Monitor Center    ?????????????????????????
 
+	//日志等级
+	const int LOG_TYPE_MESSAGE = 0;  
+	const int LOG_TYPE_WARNING = 1;
+	const int LOG_TYPE_ERROR = 2;
+	const int LOG_TYPE_EXCEPTION = 3;
+	const int LOG_TYPE_DEBUG = 255;
+
 	//日志消息最外层头结构
 	typedef struct _TLogSocketHead
 	{
@@ -44,6 +51,14 @@ namespace CC_UTILS{
 	typedef TShortValue TListViewInfo[MAX_LISTVIEW_COUNT];
 	typedef TListViewInfo* PListViewInfo;
 
+	//SMM_UPDATE_LISTVIEW
+	typedef struct _TUpdateViewInfo
+	{
+		unsigned short usRow;
+		unsigned short usCol;
+		TShortValue value;
+	}TUpdateViewInfo, *PUpdateViewInfo;
+
 	//SMM_ADD_LABEL  (Service -> Monitor IN) 来自Service
 	typedef struct _TLogLabelInfo
 	{
@@ -52,6 +67,13 @@ namespace CC_UTILS{
 		int iTag;
 		char szCaption[LABEL_CAPTION_LENGTH+1];
 	}TLogLabelInfo, *PLogLabelInfo;
+
+	//SMM_UPDATE_LABEL(Service -> Monitor IN) 来自Service
+	typedef struct _TUpdateLabelInfo
+	{
+		int iTag;								// SMM_ADD_LABEL 指定的tagid
+		char szValue[LABEL_CAPTION_LENGTH + 1];
+	}TUpdateLabelInfo, *PUpdateLabelInfo;
 
 	typedef struct _TWaitBufferNode
 	{
@@ -79,7 +101,6 @@ namespace CC_UTILS{
 		void SetListViewColumns(PListViewInfo pInfo);
 		void UpdateListView(const std::string &sDesc, unsigned short usRow, unsigned short usCol);
 		void SendLogMsg(const std::string &sMsg, int iType = 0);
-		void SendImportantLog(unsigned short usIdent, const char* pData, unsigned short usDataLen);
 		void SendToServer(unsigned short usIdent, int iParam, const char* pBuf, unsigned short usBufLen);
 		void SendTracerData(const std::string &sRoleName, const char* pBuf, unsigned short usBufLen);		
 		void SetServiceName(const std::string &sName);
@@ -93,12 +114,12 @@ namespace CC_UTILS{
 		void RegisterServerEx();
 		void SendWaitMsg();
 		void OnSocketConnect(void* Sender);
-		void OnSocketDisConnect(void* Sender);
+		void OnSocketDisconnect(void* Sender);
 		void OnSocketRead(void* Sender, const char* pBuf, unsigned short usBufLen);
 	private:
 		std::string m_sServiceName;
 		HANDLE m_DelayEvent;
-		CIOCPClientSocketManager m_ClientSocket;
+		CNetworkEventClientSocketManager m_ClientSocket;
 		int m_iPingCount;
 		std::list<PWaitBufferNode> m_WaitSendList;
 		std::mutex m_WaitMsgCS;
