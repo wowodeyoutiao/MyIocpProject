@@ -189,6 +189,35 @@ namespace CC_UTILS{
 		return -1;
 	}
 
+	std::string GetFileVersion(const std::string &sFileName)
+	{
+		unsigned long ulDummy;
+		std::string sVersion("");
+		unsigned long ulVerInfoSize = GetFileVersionInfoSize(sFileName.c_str(), &ulDummy);
+		if (0 == ulVerInfoSize)
+			return sVersion;
+
+		char* pVerInfo = (char*)malloc(ulVerInfoSize);
+		if (nullptr == pVerInfo)
+			return sVersion;
+
+		GetFileVersionInfo(sFileName.c_str(), 0, ulVerInfoSize, pVerInfo);
+		VS_FIXEDFILEINFO* pFixedFileInfo = nullptr;
+		if (0 == VerQueryValue(pVerInfo, "\\", (LPVOID*)&pFixedFileInfo, (PUINT)&ulVerInfoSize))
+			return sVersion;
+
+		if (pFixedFileInfo != nullptr)
+		{
+			int v1 = pFixedFileInfo->dwFileVersionMS >> 16;
+			int v2 = pFixedFileInfo->dwFileVersionMS & 0xFFFF;
+			int v3 = pFixedFileInfo->dwFileVersionLS >> 16;
+			int v4 = pFixedFileInfo->dwFileVersionLS & 0xFFFF;
+			sVersion = "V" + std::to_string(v1) + "." + std::to_string(v2) + "." + std::to_string(v3) + "." + std::to_string(v4);
+		}
+		free(pVerInfo);
+		return sVersion;
+	}
+
 	void SplitStr(const std::string& s, const std::string& delim, std::vector<std::string>* ret)
 	{
 		size_t last = 0;   

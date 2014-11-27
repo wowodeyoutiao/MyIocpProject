@@ -5,6 +5,8 @@
 #include "stdafx.h"
 #include "CPigClientSocket.h"
 
+using namespace CC_UTILS;
+
 /************************Start Of CPigClientSocket******************************************/
 
 CPigClientSocket::CPigClientSocket() : m_iPingCount(0)

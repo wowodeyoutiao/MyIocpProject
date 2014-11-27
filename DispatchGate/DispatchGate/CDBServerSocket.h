@@ -49,7 +49,6 @@ private:
 */
 class CDBServerSocket : public CIOCPServerSocketManager
 {
-/*
 public:
 	CDBServerSocket(const std::string& sName);
 	virtual ~CDBServerSocket();
@@ -85,9 +84,8 @@ private:
 	std::string m_sServerName;
 	int m_iConfigFileAge;
 	unsigned long m_ulLastCheckTick;
-	//FLogSocket: TLogSocket;
+	CC_UTILS::CLogSocket m_LogSocket;			//  连接日志服务的端口
 	//FServerList: TNamesHash;                  //  区组列表 
-*/
 };
 
 #endif //__CC_DB_SERVER_SOCKET_H__

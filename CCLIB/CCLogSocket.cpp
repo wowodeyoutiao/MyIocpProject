@@ -4,13 +4,13 @@
 **************************************************************************************/
 
 #include "CCLogSocket.h"
+#include "CCIniFileParser.h"
 
 namespace CC_UTILS{
 
 /************************Start Of CLogSocket******************************************/
 	CLogSocket::CLogSocket(std::string &sName, bool bListView) : m_sServiceName(sName), m_iPingCount(0), m_bListView(bListView), m_pListViewInfo(nullptr)
 	{
-		m_DelayEvent = CreateEvent(nullptr, false, false, nullptr);
 		m_ClientSocket.m_OnConnect = std::bind(&CLogSocket::OnSocketConnect, this, std::placeholders::_1);
 		m_ClientSocket.m_OnDisConnect = std::bind(&CLogSocket::OnSocketDisconnect, this, std::placeholders::_1);
 		m_ClientSocket.m_OnRead = std::bind(&CLogSocket::OnSocketRead, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
@@ -50,20 +50,20 @@ namespace CC_UTILS{
 			{
 				SendDebugString("CLogSocket::DoExecute Exception");
 			}
-			WaitForSingleObject(m_DelayEvent, 10);
+			WaitForSingleObject(m_Event, 10);
 		}
 		m_ClientSocket.Close();
 	}
 
-	typedef struct _TAddLabelRec
+	typedef struct _TAddLabelSendRec
 	{
 		TLogSocketHead head;
 		TLogLabelInfo info;
-	}TAddLabelRec, *PAddLabelRec;
+	}TAddLabelSendRec, *PAddLabelSendRec;
 
 	void CLogSocket::AddLabel(const std::string &sDesc, int iLeft, int iTop, int iTag)
 	{
-		TAddLabelRec rec;
+		TAddLabelSendRec rec;
 		if (m_ClientSocket.IsConnected())
 		{
 			memset((char *)&rec, 0, sizeof(rec));
@@ -78,15 +78,15 @@ namespace CC_UTILS{
 		m_ClientSocket.SendBuf((char*)&rec, sizeof(rec));
 	}
 
-	typedef struct _TUpdateLabelRec
+	typedef struct _TUpdateLabelSendRec
 	{
 		TLogSocketHead head;
 		TUpdateLabelInfo info;
-	}TUpdateLabelRec, *PUpdateLabelRec;
+	}TUpdateLabelSendRec, *PUpdateLabelSendRec;
 
 	void CLogSocket::UpdateLabel(const std::string &sDesc, int iTag)
 	{
-		TUpdateLabelRec rec;
+		TUpdateLabelSendRec rec;
 		if (m_ClientSocket.IsConnected())
 		{
 			memset((char *)&rec, 0, sizeof(rec));
@@ -99,15 +99,15 @@ namespace CC_UTILS{
 		m_ClientSocket.SendBuf((char*)&rec, sizeof(rec));
 	}
 
-	typedef struct _TAddListViewRec
+	typedef struct _TAddListViewSendRec
 	{
 		TLogSocketHead head;
 		TListViewInfo info;
-	}TAddListViewRec, *PAddListViewRec;
+	}TAddListViewSendRec, *PAddListViewSendRec;
 
 	void CLogSocket::AddListView(PListViewInfo pInfo)
 	{
-		TAddListViewRec rec;
+		TAddListViewSendRec rec;
 		if (m_ClientSocket.IsConnected())
 		{
 			memset((char *)&rec, 0, sizeof(rec));
@@ -138,15 +138,15 @@ namespace CC_UTILS{
 		memcpy(m_pListViewInfo, pInfo, sizeof(TListViewInfo));
 	}
 
-	typedef struct _TUpdateViewRec
+	typedef struct _TUpdateListViewSendRec
 	{
 		TLogSocketHead head;
 		TUpdateViewInfo info;
-	}TUpdateViewRec, *PUpdateViewRec;
+	}TUpdateListViewSendRec, *PUpdateListViewSendRec;
 
 	void CLogSocket::UpdateListView(const std::string &sDesc, unsigned short usRow, unsigned short usCol)
 	{
-		TUpdateViewRec rec;
+		TUpdateListViewSendRec rec;
 		if (m_ClientSocket.IsConnected())
 		{
 			memset((char *)&rec, 0, sizeof(rec));
@@ -167,6 +167,9 @@ namespace CC_UTILS{
 			return;
 #endif
 		/*
+		//---------------------------------
+		//---------------------------------
+		//---------------------------------
 		if ((LOG_TYPE_ERROR == iType) || (LOG_TYPE_EXCEPTION == iType))
 			EventReportError(msg);
 		*/
@@ -270,18 +273,87 @@ namespace CC_UTILS{
 
 	void CLogSocket::LoadConfig()
 	{
+		//---------------------------------
+		//---------------------------------
+		//---------------------------------
+		//std::string sConfigFileName(G_CurrentExePath + "config.ini");
+		std::string sConfigFileName("");
+		CWgtIniFile* pIniFileParser = new CWgtIniFile();
+		pIniFileParser->loadFromFile(sConfigFileName);
+		try
+		{
+			m_ClientSocket.m_Address = pIniFileParser->getString("Monitor", "IP", DEFAULT_LOG_SERVICE_IP);
+			m_ClientSocket.m_Port = pIniFileParser->getInteger("Monitor", "Port", DEFAULT_LOG_SERVICE_PORT);
+			m_ClientSocket.Open();
+			delete pIniFileParser;
+		}
+		catch (...)
+		{
+			delete pIniFileParser;
+		}
 	}
 
 	void CLogSocket::RegisterServer()
 	{
+		if ("" == m_sServiceName)
+			return;
+		int iBufLen = sizeof(TLogSocketHead)+sizeof(TRegisterInfo);
+		char* pBuf = (char*)malloc(iBufLen);
+		((PLogSocketHead)pBuf)->ulSign = LOG_SEGMENTATION_SIGN;
+		((PLogSocketHead)pBuf)->usIdent = SMM_REGISTER;
+		((PLogSocketHead)pBuf)->usBehindLen = iBufLen - sizeof(TLogSocketHead);
+
+		//---------------------------------------
+		//version := _FileVersion(ParamStr(0));
+		std::string version = "111";  
+		PRegisterInfo pInfo = (PRegisterInfo)(pBuf + sizeof(TLogSocketHead));
+		memcpy_s(pInfo->szServiceName, SERVICE_NAME_LENGTH, m_sServiceName.c_str(), m_sServiceName.length());
+		memcpy_s(pInfo->szVersion, LABEL_CAPTION_LENGTH, version.c_str(), version.length());
+		m_ClientSocket.SendBuf(pBuf, iBufLen, true);
 	}
 
 	void CLogSocket::RegisterServerEx()
-	{
+	{	
+		if (("" == m_sServiceName) || (nullptr == m_pListViewInfo))
+			return;
+		int iBufLen = sizeof(TLogSocketHead)+sizeof(TRegisterInfoEx);
+		char* pBuf = (char*)malloc(iBufLen);
+		((PLogSocketHead)pBuf)->ulSign = LOG_SEGMENTATION_SIGN;
+		((PLogSocketHead)pBuf)->usIdent = SMM_REGISTER_EXT;
+		((PLogSocketHead)pBuf)->usBehindLen = iBufLen - sizeof(TLogSocketHead);
+
+		//---------------------------------------
+		//version := _FileVersion(ParamStr(0));
+		std::string version = "111";
+		PRegisterInfoEx pInfo = (PRegisterInfoEx)(pBuf + sizeof(TLogSocketHead));
+		memcpy_s(pInfo->BaseInfo.szServiceName, SERVICE_NAME_LENGTH, m_sServiceName.c_str(), m_sServiceName.length());
+		memcpy_s(pInfo->BaseInfo.szVersion, LABEL_CAPTION_LENGTH, version.c_str(), version.length());
+
+		//---------------------------------
+		//---------------------------------
+		//---------------------------------
+		//??????????这个结构赋值应该有问题
+		memcpy(pInfo->ListViewInfo, m_pListViewInfo, sizeof(TListViewInfo));
+
+		m_ClientSocket.SendBuf(pBuf, iBufLen, true);
 	}
 
 	void CLogSocket::SendWaitMsg()
 	{
+		if ((m_WaitSendList.size() > 0) && (m_sServiceName != ""))
+		{
+			std::list<PWaitBufferNode>::iterator vIter;
+			PWaitBufferNode pNode;
+			std::lock_guard<std::mutex> guard(m_WaitMsgCS);
+			for (vIter = m_WaitSendList.begin(); vIter != m_WaitSendList.end(); ++vIter)
+			{
+				pNode = (PWaitBufferNode)*vIter;
+				if ((pNode != nullptr) && (pNode->pBuf != nullptr))
+					m_ClientSocket.SendBuf(pNode->pBuf, pNode->usBufLen, true);
+				delete pNode;
+			}
+			m_WaitSendList.clear();
+		}
 	}
 
 	void CLogSocket::OnSocketConnect(void* Sender)

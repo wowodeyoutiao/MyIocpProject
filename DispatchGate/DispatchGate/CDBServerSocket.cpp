@@ -5,6 +5,8 @@
 #include "stdafx.h"
 #include "CDBServerSocket.h"
 
+using namespace CC_UTILS;
+
 /************************Start Of CDBConnector******************************************/
 CDBConnector::CDBConnector() :m_iServerID(0), m_iPlayerCount(0), m_DefaultRule(itDeny), m_sDenyHint("服务器目前未开放，请等候"), m_sServerName("")
 {

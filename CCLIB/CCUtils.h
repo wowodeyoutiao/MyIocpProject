@@ -53,8 +53,12 @@ namespace CC_UTILS{
 		int m_iMemoryPosition;
 	}TBufferStream, *PBufferStream;
 
-	//返回文件的最后修改时间代表的版本号
+	//返回文件的最后修改时间转化成的整数，用以检测文件是否修改
 	int GetFileAge(const std::string &sFileName);
+
+	//返回文件的版本信息  
+	//注意：需要工程中加入version.lib
+	std::string GetFileVersion(const std::string &sFileName);
 
 	//字符串分割
 	void SplitStr(const std::string& s, const std::string& delim, std::vector<std::string>* ret);

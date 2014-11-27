@@ -5,6 +5,8 @@
 #include "stdafx.h"
 #include "CClientServerSocket.h"
 
+using namespace CC_UTILS;
+
 const std::string IPCONFIG_FILE = "ipaddress.txt";        // IP配置文件
 const int MAX_CONNECT_TIMEOUT = 30 * 1000;                // 最长的连接时间
 const int DELAY_DISCONNECT_TIME = 3000;                   // 延时断开时间
@@ -354,7 +356,7 @@ void CClientServerSocket::CheckIpConfig(unsigned long ulTick)
 	{
 		m_ulLastCheckTick = ulTick;
 		std::string sIPConfigFileName(G_CurrentExePath + "config.ini");
-		int iAge = CC_UTILS::GetFileAge(sIPConfigFileName);
+		int iAge = GetFileAge(sIPConfigFileName);
 
 		if ((iAge != -1) && (iAge != m_iIPConfigFileAge))
 		{

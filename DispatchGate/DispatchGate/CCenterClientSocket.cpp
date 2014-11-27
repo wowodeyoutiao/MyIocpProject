@@ -5,6 +5,8 @@
 #include "stdafx.h"
 #include "CCenterClientSocket.h"
 
+using namespace CC_UTILS;
+
 /************************Start Of CCenterClientSocket******************************************/
 
 CCenterClientSocket::CCenterClientSocket() : m_iPingCount(0)
@@ -38,7 +40,7 @@ void CCenterClientSocket::LoadConfig(CWgtIniFile* pIniFileParser)
 				break;
 
 			vec.clear();
-			CC_UTILS::SplitStr(sServerStr, ":", &vec);  //vec[0]是ip vec[1]是port port必须配置
+		    SplitStr(sServerStr, ":", &vec);  //vec[0]是ip vec[1]是port port必须配置
 			//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 			//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 			//这里如果是无法转换成整数，则会报异常

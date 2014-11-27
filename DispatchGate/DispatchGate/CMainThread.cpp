@@ -5,6 +5,8 @@
 #include "stdafx.h"
 #include "CMainThread.h"
 
+using namespace CC_UTILS;
+
 /************************Start Of CMainThread**************************************************/
 CMainThread::CMainThread(const std::string &sServerName) : m_ulSlowRunTick(0), m_ulCheckConfigTick(0), m_iConfigFileAge(0)
 {
@@ -37,7 +39,7 @@ void CMainThread::CheckConfig(const unsigned long ulTick)
 	{
 		m_ulCheckConfigTick = ulTick;	
 		std::string sConfigFileName(G_CurrentExePath + "config.ini");
-		int iAge = CC_UTILS::GetFileAge(sConfigFileName);
+		int iAge = GetFileAge(sConfigFileName);
 		if ((iAge != -1) && (iAge != m_iConfigFileAge))
 		{
 			if (m_iConfigFileAge > 0)
