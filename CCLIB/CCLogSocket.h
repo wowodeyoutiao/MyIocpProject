@@ -9,6 +9,7 @@
 #include <list>
 #include "CCTcpSocketCommon.h"
 #include "CCTcpClientSocket.h"
+#include "CCGameCommon.h"
 
 namespace CC_UTILS{
 
@@ -32,11 +33,11 @@ namespace CC_UTILS{
 	const int DEFAULT_MONITOR_PORT = 7823;                    // Viewer  -> Monitor Center    ?????????????????????????
 
 	//日志等级
-	const int LOG_TYPE_MESSAGE = 0;  
-	const int LOG_TYPE_WARNING = 1;
-	const int LOG_TYPE_ERROR = 2;
-	const int LOG_TYPE_EXCEPTION = 3;
-	const int LOG_TYPE_DEBUG = 255;
+	const int lmtMessage = 0;
+	const int lmtWarning = 1;
+	const int lmtError = 2;
+	const int lmtException = 3;
+	const int lmtDebug = 255;
 
 	//日志消息最外层头结构
 	typedef struct _TLogSocketHead
@@ -74,6 +75,12 @@ namespace CC_UTILS{
 		int iTag;								// SMM_ADD_LABEL 指定的tagid
 		char szValue[LABEL_CAPTION_LENGTH + 1];
 	}TUpdateLabelInfo, *PUpdateLabelInfo;
+
+	//SMM_TRACE_DATA
+	typedef struct _TTraceData
+	{
+		char szRoleName[ACTOR_NAME_MAX_LEN];
+	}TTraceData, *PTraceData;
 
 	typedef struct _TWaitBufferNode
 	{

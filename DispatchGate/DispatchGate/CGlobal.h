@@ -23,13 +23,6 @@ typedef struct _TIpRuleNode
 	TIpType ipType;
 }TIpRuleNode, *PIpRuleNode;
 
-
-//日志等级---全局常量在.h文件声明定义
-const int lmtMessage = 0;
-const int lmtWarning = 1;
-const int lmtError = 2;
-const int lmtException = 3;
-
 const int MAX_CENTER_SERVER_COUNT = 3;    //中央服务器最大数量
 const int MAX_RESSERVER_COUNT = 40;       //资源服务器最大数量
 

@@ -163,7 +163,7 @@ namespace CC_UTILS{
 	void CLogSocket::SendLogMsg(const std::string &sMsg, int iType)
 	{
 #ifndef TEST
-		if (LOG_TYPE_DEBUG == iType)
+		if (lmtDebug == iType)
 			return;
 #endif
 		/*
@@ -216,6 +216,19 @@ namespace CC_UTILS{
 
 	void CLogSocket::SendTracerData(const std::string &sRoleName, const char* pBuf, unsigned short usBufLen)
 	{
+		if ((nullptr == pBuf) || (0 == usBufLen))
+			return;
+
+		unsigned short usSendLen = sizeof(TLogSocketHead) + sizeof(TTraceData) + usBufLen;
+		char* pTempBuf = (char*)malloc(usSendLen);
+		((PLogSocketHead)pBuf)->ulSign = LOG_SEGMENTATION_SIGN;
+		((PLogSocketHead)pBuf)->usIdent = SMM_TRACE_DATA;
+		((PLogSocketHead)pBuf)->usBehindLen = usSendLen - sizeof(TLogSocketHead);
+		memset((pTempBuf + sizeof(TLogSocketHead)), 0, sizeof(TTraceData));
+		memcpy_s(((PTraceData)(pTempBuf + sizeof(TLogSocketHead)))->szRoleName, ACTOR_NAME_MAX_LEN, sRoleName.c_str(), sRoleName.length());
+		if ((pBuf != nullptr) && (usBufLen > 0))
+			memcpy(pTempBuf+sizeof(TLogSocketHead)+sizeof(TTraceData), pBuf, usBufLen);
+		m_ClientSocket.SendBuf(pTempBuf, usBufLen, true);
 	}
 
 	void CLogSocket::SetServiceName(const std::string &sName)
