@@ -38,7 +38,7 @@ void CMainThread::CheckConfig(const unsigned long ulTick)
 	if ((0 == m_ulCheckConfigTick) || (ulTick - m_ulCheckConfigTick >= 30 * 1000))
 	{
 		m_ulCheckConfigTick = ulTick;	
-		std::string sConfigFileName(G_CurrentExePath + "config.ini");
+		std::string sConfigFileName(G_CurrentWorkDir + "config.ini");
 		int iAge = GetFileAge(sConfigFileName);
 		if ((iAge != -1) && (iAge != m_iConfigFileAge))
 		{

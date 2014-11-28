@@ -37,7 +37,8 @@ int _tmain(int argc, _TCHAR* argv[])
 	{
 		if (DoInitialWinSocket())
 		{
-			G_CurrentExePath = "d:\\";
+			G_CurrentExeFileName = argv[0];
+			G_CurrentWorkDir = "\\";
 
 			ServiceManagerFunc = (TServiceManagerFunc)GetProcAddress(hWindowsServiceDll, "DoApplicationRun");
 			if (ServiceManagerFunc != nullptr)

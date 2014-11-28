@@ -322,9 +322,7 @@ namespace CC_UTILS{
 		((PLogSocketHead)pBuf)->usIdent = SMM_REGISTER_EXT;
 		((PLogSocketHead)pBuf)->usBehindLen = iBufLen - sizeof(TLogSocketHead);
 
-		//---------------------------------------
-		//version := _FileVersion(ParamStr(0));
-		std::string version = "111";
+		std::string version = CC_UTILS::GetFileVersion(G_CurrentExeFileName);
 		PRegisterInfoEx pInfo = (PRegisterInfoEx)(pBuf + sizeof(TLogSocketHead));
 		memcpy_s(pInfo->BaseInfo.szServiceName, SERVICE_NAME_LENGTH, m_sServiceName.c_str(), m_sServiceName.length());
 		memcpy_s(pInfo->BaseInfo.szVersion, LABEL_CAPTION_LENGTH, version.c_str(), version.length());
