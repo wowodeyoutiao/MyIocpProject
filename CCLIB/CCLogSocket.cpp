@@ -273,11 +273,7 @@ namespace CC_UTILS{
 
 	void CLogSocket::LoadConfig()
 	{
-		//---------------------------------
-		//---------------------------------
-		//---------------------------------
-		//std::string sConfigFileName(G_CurrentExePath + "config.ini");
-		std::string sConfigFileName("");
+		std::string sConfigFileName(G_CurrentExeDir + "config.ini");
 		CWgtIniFile* pIniFileParser = new CWgtIniFile();
 		pIniFileParser->loadFromFile(sConfigFileName);
 		try
@@ -303,9 +299,7 @@ namespace CC_UTILS{
 		((PLogSocketHead)pBuf)->usIdent = SMM_REGISTER;
 		((PLogSocketHead)pBuf)->usBehindLen = iBufLen - sizeof(TLogSocketHead);
 
-		//---------------------------------------
-		//version := _FileVersion(ParamStr(0));
-		std::string version = "111";  
+		std::string version = CC_UTILS::GetFileVersion(G_CurrentExeFileName);
 		PRegisterInfo pInfo = (PRegisterInfo)(pBuf + sizeof(TLogSocketHead));
 		memcpy_s(pInfo->szServiceName, SERVICE_NAME_LENGTH, m_sServiceName.c_str(), m_sServiceName.length());
 		memcpy_s(pInfo->szVersion, LABEL_CAPTION_LENGTH, version.c_str(), version.length());

@@ -8,6 +8,9 @@
 
 namespace CC_UTILS{
 
+	std::string G_CurrentExeFileName;   //当前程序的完整路径
+	std::string G_CurrentExeDir;        //当前程序所在的目录
+
 	/************************Start Of _TSimpleHash******************************************/
 	void _TSimpleHash::DoInitial(int iSize)
 	{

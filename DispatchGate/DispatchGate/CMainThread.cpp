@@ -3,7 +3,6 @@
 @content: 主线程单元
 **************************************************************************************/
 #include "stdafx.h"
-#include "CMainThread.h"
 
 using namespace CC_UTILS;
 
@@ -38,7 +37,7 @@ void CMainThread::CheckConfig(const unsigned long ulTick)
 	if ((0 == m_ulCheckConfigTick) || (ulTick - m_ulCheckConfigTick >= 30 * 1000))
 	{
 		m_ulCheckConfigTick = ulTick;	
-		std::string sConfigFileName(G_CurrentWorkDir + "config.ini");
+		std::string sConfigFileName(G_CurrentExeDir + "config.ini");
 		int iAge = GetFileAge(sConfigFileName);
 		if ((iAge != -1) && (iAge != m_iConfigFileAge))
 		{

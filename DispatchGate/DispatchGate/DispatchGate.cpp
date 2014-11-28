@@ -5,7 +5,7 @@
 
 #include "stdafx.h"
 
-using namespace std;
+using namespace CC_UTILS;
 
 char DEFAULT_SERVICE_NAME[] = "DispatchGate";
 char DEFAULT_DESCRIPTION[] = "LongGet 游戏登录网关服务";
@@ -38,7 +38,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		if (DoInitialWinSocket())
 		{
 			G_CurrentExeFileName = argv[0];
-			G_CurrentWorkDir = "\\";
+			G_CurrentExeDir = "\\";
 
 			ServiceManagerFunc = (TServiceManagerFunc)GetProcAddress(hWindowsServiceDll, "DoApplicationRun");
 			if (ServiceManagerFunc != nullptr)

@@ -355,7 +355,7 @@ void CClientServerSocket::CheckIpConfig(unsigned long ulTick)
 	if ((0 == m_ulLastCheckTick) || (ulTick - m_ulLastCheckTick >= 20 * 1000))
 	{
 		m_ulLastCheckTick = ulTick;
-		std::string sIPConfigFileName(G_CurrentWorkDir + "config.ini");
+		std::string sIPConfigFileName(G_CurrentExeDir + "config.ini");
 		int iAge = GetFileAge(sIPConfigFileName);
 
 		if ((iAge != -1) && (iAge != m_iIPConfigFileAge))
