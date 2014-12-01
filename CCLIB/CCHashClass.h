@@ -2,6 +2,9 @@
 @author: 陈昌
 @content: 自己使用的Hash类
 		  支持可重入的循环遍历，不调用First的时候是保留当前遍历到的结点状态
+		  CIntegerHash是以整数作为key
+		  CStringHash是以字符串作为key，英文字符串都转化成小写
+
 		  使用遍历的示例代码：
 		  hash.First;
 		  while (not hash.Eof())

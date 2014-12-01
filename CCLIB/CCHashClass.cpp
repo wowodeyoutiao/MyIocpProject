@@ -1,7 +1,6 @@
 /**************************************************************************************
 @author: 陈昌
 @content: 自己使用的Hash类
-		  支持可重入的循环遍历，不调用First的时候是保留当前遍历到的结点状态
 **************************************************************************************/
 
 #include "CCHashClass.h"
@@ -388,6 +387,7 @@ namespace CC_UTILS{
 			return nullptr;
 	}
 
+	//CStringHash的key不区分大小写
 	unsigned long CStringHash::HashOf(const std::string &sKey)
 	{
 		unsigned long ulRetCode = 0;
@@ -397,19 +397,22 @@ namespace CC_UTILS{
 		for (int i = 0; i < sKey.length(); i++)
 		{
 			key = (unsigned char)sKey[i];
+
+			//判断单双字节
+			//由于ANSI字符有128个, 所以, ANSI字符的bit最高位为0, 当bit最高位为1时, 
+			//就表示是个双字节字符了。而char（也即是signed char）的正负恰好由最高位决定，于是直接利用char < 0 来判断是否是双字节字符了。
 			if (!bHead)
 			{
 				bTail = false;
-				/*
-				if sKey[I] in LeadBytes then
-				BoHead := True;
-				*/
+				if (sKey[i] < 0)
+					bHead = true;
 			}
 			else
 			{
 				bTail = true;
 				bHead = false;
 			}
+			//单字节的大写字母都转成小写
 			if ((!bHead) && (!bTail) && (key >= 0x41) && (key <= 0x5A))
 				key = key | 0x20;
 
