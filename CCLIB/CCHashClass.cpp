@@ -390,36 +390,32 @@ namespace CC_UTILS{
 
 	unsigned long CStringHash::HashOf(const std::string &sKey)
 	{
-		return 0;
-		/*
-var
-  BoHead, BoTail    : Boolean;
-  I                 : Integer;
-  key               : Byte;
-begin
-  Result := 0;
-  BoHead := False;
-  for I := 1 to Length(sKey) do
-  begin
-    key := Ord(sKey[I]);
-    if not BoHead then
-    begin
-      BoTail := False;
-      if sKey[I] in LeadBytes then
-        BoHead := True;
-    end
-    else
-    begin
-      BoTail := True;
-      BoHead := False;
-    end;
-    if not BoHead and not BoTail and (key in [$41..$5A]) then
-      key := key or $20;
+		unsigned long ulRetCode = 0;
+		bool bHead = false;
+		bool bTail = false;
+		unsigned char key;
+		for (int i = 0; i < sKey.length(); i++)
+		{
+			key = (unsigned char)sKey[i];
+			if (!bHead)
+			{
+				bTail = false;
+				/*
+				if sKey[I] in LeadBytes then
+				BoHead := True;
+				*/
+			}
+			else
+			{
+				bTail = true;
+				bHead = false;
+			}
+			if ((!bHead) && (!bTail) && (key >= 0x41) && (key <= 0x5A))
+				key = key | 0x20;
 
-    Result := ((Result shl 2) or (Result shr (SizeOf(Result) * 8 - 2))) xor key;
-  end;
-end;
-		*/
+			ulRetCode = ((ulRetCode << 2) | (ulRetCode >> (sizeof(ulRetCode) * 8 - 2))) ^ key;
+		}
+		return ulRetCode;
 	}
 
 	PPStrHashItem CStringHash::Find(const std::string &sKey)

@@ -72,11 +72,10 @@ private:
 	bool RegisterDBServer(const std::string &sAddress, int iServerID, CDBConnector &dbServer);
 	void ShowDBMsg(int iServerID, int iCol, const std::string &msg);
 	std::string OnLineDBServer(int iServerID);
-
+	void RemoveServerInfo(void* pValue, const std::string &sKey);
 	//-----------------------------
 	//-----------------------------
 	//-----------------------------
-	//procedure RemoveServerInfo(Pvalue: Pointer; const Key: ansistring);
 	//procedure EnumAreaConfig(ElName: string; Elem: TlkJSONbase;data: pointer; var Continue: Boolean);
 private:
 	std::string m_sAllowDBServerIP;				// 允许的IP
@@ -85,7 +84,7 @@ private:
 	int m_iConfigFileAge;
 	unsigned long m_ulLastCheckTick;
 	CC_UTILS::CLogSocket m_LogSocket;			//  连接日志服务的端口
-	//FServerList: TNamesHash;                  //  区组列表 
+	CC_UTILS::CStringHash m_ServerHash;         //  区组列表 
 };
 
 #endif //__CC_DB_SERVER_SOCKET_H__
