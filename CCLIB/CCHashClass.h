@@ -2,6 +2,14 @@
 @author: 陈昌
 @content: 自己使用的Hash类
 		  支持可重入的循环遍历，不调用First的时候是保留当前遍历到的结点状态
+		  使用遍历的示例代码：
+		  hash.First;
+		  while (not hash.Eof())
+		  {
+			P := hash.GetNextNode();  
+			//code to do
+			//....
+		  }
 **************************************************************************************/
 #ifndef __CC_HASH_CLASS_H__
 #define __CC_HASH_CLASS_H__
@@ -35,7 +43,6 @@ namespace CC_UTILS{
 		bool Remove(const int iKey);
 		void* ValueOf(const int iKey);
 		int Touch(TTouchFunc func, unsigned long ulParam);
-		int GetNext(void* ptr);
 		void First();
 		bool Eof();
 		void* GetNextNode();         //该函数包含返回下一结点，并将m_pCurrentQueueNode指向下一结点这两个操作
@@ -45,6 +52,7 @@ namespace CC_UTILS{
 	private:
 		unsigned long HashOf(const int iKey);
 		PPIntHashItem Find(const int iKey);
+		void DoRemoveItem(PIntHashItem pItem);
 	private:
 		int m_iTotalCount;
 		unsigned long m_ulBucketSize;
@@ -55,7 +63,46 @@ namespace CC_UTILS{
 	};
 
 
+	//字符串作为key的hash
+	typedef std::function<void(void* pValue, const std::string &sKey)> TRemoveStrValueEvent;
+	typedef struct _TStrHashItem
+	{
+		_TStrHashItem* BPrev;   //单个bucket链表中的前置结点
+		_TStrHashItem* BNext;   //单个bucket链表中的后置结点
+		_TStrHashItem* LPrev;   //总链表中的前置节点
+		_TStrHashItem* LNext;   //总链表中的后置节点
+		std::string Key;
+		void* Value;
+	}TStrHashItem, *PStrHashItem, **PPStrHashItem;
 
+	class CStringHash
+	{
+	public:
+		CStringHash(unsigned long ulSize = 1023);
+		virtual ~CStringHash();
+		bool Add(const std::string &sKey, void* pValue);
+		void Clear();
+		bool Remove(const std::string &sKey);
+		void* ValueOf(const std::string &sKey);
+		int Touch(TTouchFunc func, unsigned long ulParam);
+		void First();
+		bool Eof();
+		void* GetNextNode();         //该函数包含返回下一结点，并将m_pCurrentQueueNode指向下一结点这两个操作
+		int GetCount(){ return m_iTotalCount; };
+	public:
+		TRemoveStrValueEvent m_RemoveEvent;
+	private:
+		unsigned long HashOf(const std::string &sKey);
+		PPStrHashItem Find(const std::string &sKey);
+		void DoRemoveItem(PStrHashItem pItem);
+	private:
+		int m_iTotalCount;
+		unsigned long m_ulBucketSize;
+		PStrHashItem m_pFirstListNode;
+		PStrHashItem m_pLastListNode;
+		PStrHashItem m_pCurrentQueueNode;
+		PPStrHashItem m_TopBuckets;
+	};
 
 }
 

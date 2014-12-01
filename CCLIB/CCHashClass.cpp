@@ -71,12 +71,68 @@ namespace CC_UTILS{
 		m_pCurrentQueueNode = nullptr;
 		for (int i = 0; i < (int)m_ulBucketSize; i++)
 			m_TopBuckets[i] = nullptr;
-		m_iTotalCount;
+		m_iTotalCount = 0;
+	}
+
+	void CIntegerHash::DoRemoveItem(PIntHashItem pItem)
+	{
+		if (pItem != nullptr)
+		{
+			if (pItem->BNext != nullptr)
+				pItem->BNext->BPrev = pItem->BPrev;
+
+			if (pItem->BPrev != nullptr)
+				pItem->BPrev->BNext = pItem->BNext;
+			else
+			{
+				unsigned long ulHash = HashOf(pItem->Key) % m_ulBucketSize;
+				m_TopBuckets[ulHash] = pItem->BNext;
+			}
+
+			if (pItem->LNext != nullptr)
+				pItem->LNext->LPrev = pItem->LPrev;
+			else
+				m_pLastListNode = pItem->LPrev;
+
+			if (pItem->LPrev != nullptr)
+				pItem->LPrev->LNext = pItem->LNext;
+			else
+				m_pFirstListNode = pItem->LNext;
+
+			try
+			{
+				if (m_RemoveEvent != nullptr)
+					m_RemoveEvent(pItem->Value, pItem->Key);
+			}
+			catch (...)
+			{
+				//吞下remove函数的异常
+			}
+
+			if (pItem == m_pCurrentQueueNode)
+				m_pCurrentQueueNode = pItem->LNext;
+
+			delete pItem;
+			--m_iTotalCount;
+		}
 	}
 
 	bool CIntegerHash::Remove(const int iKey)
 	{
-
+		bool retFlag = false;
+		unsigned long ulHash = HashOf(iKey) % m_ulBucketSize;
+		PIntHashItem pCurr = m_TopBuckets[ulHash];
+		while (pCurr != nullptr)
+		{
+			if (iKey == pCurr->Key)
+			{
+				DoRemoveItem(pCurr);
+				retFlag = true;
+				break;
+			}
+			pCurr = pCurr->BNext;
+		}
+		return retFlag;
 	}
 
 	void* CIntegerHash::ValueOf(const int iKey)
@@ -88,11 +144,24 @@ namespace CC_UTILS{
 			return nullptr;
 	}
 
+	//func返回true的时候，从hash中删除该结点
 	int CIntegerHash::Touch(TTouchFunc func, unsigned long ulParam)
-	{}
-
-	int CIntegerHash::GetNext(void* ptr)
-	{}
+	{
+		int iRetCode = 0;
+		if (func != nullptr)
+		{
+			PIntHashItem pCurr = m_pFirstListNode;
+			PIntHashItem pNext = nullptr;
+			while (pCurr != nullptr)
+			{
+				pNext = pCurr->LNext;
+				if (func(pCurr->Value, ulParam, iRetCode))
+					DoRemoveItem(pCurr);
+				pCurr = pNext;
+			}
+		}
+		return iRetCode;		
+	}
 
 	void CIntegerHash::First()
 	{
@@ -138,5 +207,235 @@ namespace CC_UTILS{
 	}
 
 /************************End Of CIntegerHash****************************************************/
+
+
+
+/************************Start Of CStringHash**************************************************/
+
+	CStringHash::CStringHash(unsigned long ulSize) : m_RemoveEvent(nullptr), m_iTotalCount(0), m_ulBucketSize(ulSize), m_pFirstListNode(nullptr),
+		m_pLastListNode(nullptr), m_pCurrentQueueNode(nullptr)
+	{
+		m_TopBuckets = new PStrHashItem[ulSize];
+	}
+
+	CStringHash::~CStringHash()
+	{
+		Clear();
+		delete[] m_TopBuckets;
+	}
+
+	bool CStringHash::Add(const std::string &sKey, void* pValue)
+	{
+		bool retFlag = false;
+		PStrHashItem pBucket = *(Find(sKey));
+		if (nullptr == pBucket)
+		{
+			unsigned long ulHash = HashOf(sKey) % m_ulBucketSize;
+			pBucket = new TStrHashItem;
+			pBucket->Key = sKey;
+			pBucket->Value = pValue;
+			pBucket->BPrev = nullptr;
+			pBucket->BNext = m_TopBuckets[ulHash];
+			pBucket->LPrev = m_pLastListNode;
+			pBucket->LNext = nullptr;
+
+			if (pBucket->BNext != nullptr)
+				pBucket->BNext->BPrev = pBucket;
+			if (pBucket->LPrev != nullptr)
+				pBucket->LPrev->LNext = pBucket;
+			else
+				m_pFirstListNode = pBucket;
+
+			m_TopBuckets[ulHash] = pBucket;
+			m_pLastListNode = pBucket;
+			++m_iTotalCount;
+			retFlag = true;
+		}
+		return retFlag;
+	}
+
+	void CStringHash::Clear()
+	{
+		PStrHashItem pCurr, pNext, pLast;
+		pCurr = m_pFirstListNode;
+		while (pCurr != nullptr)
+		{
+			pNext = pCurr->LNext;
+			pLast = pCurr;
+			pCurr = pNext;
+
+			if (m_RemoveEvent != nullptr)
+				m_RemoveEvent(pLast->Value, pLast->Key);
+			delete pLast;
+		}
+		m_pFirstListNode = nullptr;
+		m_pLastListNode = nullptr;
+		m_pCurrentQueueNode = nullptr;
+		for (int i = 0; i < (int)m_ulBucketSize; i++)
+			m_TopBuckets[i] = nullptr;
+		m_iTotalCount = 0;
+	}
+
+	void CStringHash::DoRemoveItem(PStrHashItem pItem)
+	{
+		if (pItem != nullptr)
+		{
+			if (pItem->BNext != nullptr)
+				pItem->BNext->BPrev = pItem->BPrev;
+
+			if (pItem->BPrev != nullptr)
+				pItem->BPrev->BNext = pItem->BNext;
+			else
+			{
+				unsigned long ulHash = HashOf(pItem->Key) % m_ulBucketSize;
+				m_TopBuckets[ulHash] = pItem->BNext;
+			}
+
+			if (pItem->LNext != nullptr)
+				pItem->LNext->LPrev = pItem->LPrev;
+			else
+				m_pLastListNode = pItem->LPrev;
+
+			if (pItem->LPrev != nullptr)
+				pItem->LPrev->LNext = pItem->LNext;
+			else
+				m_pFirstListNode = pItem->LNext;
+
+			try
+			{
+				if (m_RemoveEvent != nullptr)
+					m_RemoveEvent(pItem->Value, pItem->Key);
+			}
+			catch (...)
+			{
+				//吞下remove函数的异常
+			}
+
+			if (pItem == m_pCurrentQueueNode)
+				m_pCurrentQueueNode = pItem->LNext;
+
+			delete pItem;
+			--m_iTotalCount;
+		}
+	}
+
+	bool CStringHash::Remove(const std::string &sKey)
+	{
+		bool retFlag = false;
+		unsigned long ulHash = HashOf(sKey) % m_ulBucketSize;
+		PStrHashItem pCurr = m_TopBuckets[ulHash];
+		while (pCurr != nullptr)
+		{
+			if (0 == sKey.compare(pCurr->Key))
+			{
+				DoRemoveItem(pCurr);
+				retFlag = true;
+				break;
+			}
+			pCurr = pCurr->BNext;
+		}
+		return retFlag;
+	}
+
+	void* CStringHash::ValueOf(const std::string &sKey)
+	{
+		PStrHashItem pItem = *(Find(sKey));
+		if (pItem != nullptr)
+			return pItem->Value;
+		else
+			return nullptr;
+	}
+
+	int CStringHash::Touch(TTouchFunc func, unsigned long ulParam)
+	{
+		int iRetCode = 0;
+		if (func != nullptr)
+		{
+			PStrHashItem pCurr = m_pFirstListNode;
+			PStrHashItem pNext = nullptr;
+			while (pCurr != nullptr)
+			{
+				pNext = pCurr->LNext;
+				if (func(pCurr->Value, ulParam, iRetCode))
+					DoRemoveItem(pCurr);
+				pCurr = pNext;
+			}
+		}
+		return iRetCode;
+	}
+
+	void CStringHash::First()
+	{
+		m_pFirstListNode = m_pCurrentQueueNode;
+	}
+
+	bool CStringHash::Eof()
+	{
+		return (m_pCurrentQueueNode == nullptr);
+	}
+
+	void* CStringHash::GetNextNode()
+	{
+		if (nullptr == m_pCurrentQueueNode)
+			First();
+		if (m_pCurrentQueueNode != nullptr)
+		{
+			void* p = m_pCurrentQueueNode->Value;
+			m_pCurrentQueueNode = m_pCurrentQueueNode->LNext;
+			return p;
+		}
+		else
+			return nullptr;
+	}
+
+	unsigned long CStringHash::HashOf(const std::string &sKey)
+	{
+		return 0;
+		/*
+var
+  BoHead, BoTail    : Boolean;
+  I                 : Integer;
+  key               : Byte;
+begin
+  Result := 0;
+  BoHead := False;
+  for I := 1 to Length(sKey) do
+  begin
+    key := Ord(sKey[I]);
+    if not BoHead then
+    begin
+      BoTail := False;
+      if sKey[I] in LeadBytes then
+        BoHead := True;
+    end
+    else
+    begin
+      BoTail := True;
+      BoHead := False;
+    end;
+    if not BoHead and not BoTail and (key in [$41..$5A]) then
+      key := key or $20;
+
+    Result := ((Result shl 2) or (Result shr (SizeOf(Result) * 8 - 2))) xor key;
+  end;
+end;
+		*/
+	}
+
+	PPStrHashItem CStringHash::Find(const std::string &sKey)
+	{
+		unsigned long ulHash = HashOf(sKey) % m_ulBucketSize;
+		PPStrHashItem ppItem = &m_TopBuckets[ulHash];
+		while (*ppItem != nullptr)
+		{
+			if (0 == sKey.compare((*ppItem)->Key))
+				break;
+			else
+				ppItem = &((*ppItem)->BNext);
+		}
+		return ppItem;
+	}
+
+/************************End Of CStringHash****************************************************/
 
 }
