@@ -36,7 +36,8 @@ public:
 	int SendText(const std::string& s);
 	void IocpSendback(int iTransfered);
 	bool IocpReadback(int iTransfered);
-	std::string GetRemoteAddress();
+	std::string& GetRemoteAddress();
+	unsigned short GetSocketHandle(){ return m_SocketHandle; }
 protected:
 	virtual void Execute(unsigned long ulTick){}
 	virtual void SocketRead(const char* pBuf, int iCount){}
@@ -158,6 +159,7 @@ protected:
 	void SetMaxBlockSize(const int iSize){ m_iMaxBlockSize = iSize; }
 protected:
 	std::mutex m_LockCS;                     // 临界区操作使用的互斥锁，子类特殊条件会使用
+	std::list<void*> m_ActiveConnects;		 // 维护当前连接客户端的对象列表，该成员变量还是需要对外开放，最少需要对子类开放
 private: 
 	void DoReady(void* Sender);
 	void DoSocketClose(void* Sender);
@@ -175,7 +177,6 @@ private:
 	bool m_bDelayFree;                       // 处理延时释放客户端连接的标记
 	PDelayFreeNode m_DFNFirst;               // 延时释放的头节点
 	PDelayFreeNode m_DFNLast;				 // 延时释放的尾节点
-	std::list<void*> m_ActiveConnects;		 // 维护当前连接客户端的对象列表，该成员变量还是需要对外开放，最少需要对子类开放
 	unsigned short m_usNewCreateHandle;		 // 最新创建的Handle编号，保存
 	int m_iDelayFreeHandleCount;			 // 当前正在延时释放的客户端句柄数量
 	CC_UTILS::TSimpleHash m_QueryClientHash; // 用于查询客户端连接的简易hash，只存放对象指针，不负责创建释放对象

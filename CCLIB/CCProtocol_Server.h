@@ -15,6 +15,17 @@ typedef struct _TServerSocketHeader
 	unsigned short usBehindLen;			// 后续数据长度
 }TServerSocketHeader, *PServerSocketHeader;
 
+// Dispatch Gate -> DBServer 转发玩家选区信息
+typedef struct _TClientSelectServerInfo
+{
+	int iSessionID;
+	int iSelectServerID;
+	int iEnCodeIdx;
+	int iClientType;
+	bool bMasterIP;
+	unsigned char ucNetType;
+}TClientSelectServerInfo, *PClientSelectServerInfo;
+
 // ip地址的字符串类型
 typedef char TIPAddress[15];
 typedef TIPAddress* PIPAddress;
@@ -33,6 +44,16 @@ typedef struct _TServerConnectInfo
 	TServerAddress Addr;
 	int iConnectCount;
 }TServerConnectInfo, *PServerConnectInfo;
+
+// Pig查询区组信息
+typedef struct _TPigQueryServerInfo
+{
+	int iServerID;
+	char szServerIP[16];
+	char szServerName[51];
+}TPigQueryServerInfo, *PPigQueryServerInfo;
+
+
 
 const int SS_SEGMENTATION_SIGN = 0XFFEEDDCC;                        // 服务器之间通信协议起始标志
 

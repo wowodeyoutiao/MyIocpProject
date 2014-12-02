@@ -38,7 +38,7 @@ void CPigClientSocket::LoadConfig(CWgtIniFile* pIniFileParser)
 	}
 }
 
-void CPigClientSocket::SendToServerPeer(unsigned short usIdent, int iParam, char* pBuf, unsigned short usBufLen)
+void CPigClientSocket::SendToServerPeer(unsigned short usIdent, int iParam, void* pBuf, unsigned short usBufLen)
 {
 	int iDataLen = sizeof(TServerSocketHeader)+usBufLen;
 	char* pData = (char*)malloc(iDataLen);

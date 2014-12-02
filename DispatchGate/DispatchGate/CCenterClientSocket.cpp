@@ -51,7 +51,7 @@ void CCenterClientSocket::LoadConfig(CWgtIniFile* pIniFileParser)
 			if (iPort > 0)
 			{
 				//端口必须配置
-				strcpy_s(m_ServerArray[i].IPAddress, 16, vec[0].c_str());				
+				memcpy_s(m_ServerArray[i].IPAddress, 15, vec[0].c_str(), vec[0].length());
 				m_ServerArray[i].iPort = iPort;
 				bConfigOK = true;
 			}
@@ -62,7 +62,7 @@ void CCenterClientSocket::LoadConfig(CWgtIniFile* pIniFileParser)
 		Log("CenterServer 未配置!", lmtError);
 }
 
-void CCenterClientSocket::SendToServerPeer(unsigned short usIdent, int iParam, char* pBuf, unsigned short usBufLen)
+void CCenterClientSocket::SendToServerPeer(unsigned short usIdent, int iParam, void* pBuf, unsigned short usBufLen)
 {
 	int iDataLen = sizeof(TServerSocketHeader) + usBufLen;
 	char* pData = (char*)malloc(iDataLen);
@@ -121,19 +121,13 @@ void CCenterClientSocket::DoHeartBeat()
 
 void CCenterClientSocket::OnSocketConnect(void* Sender)
 {
-	std::string temps("与CCenterClientSocket(");
-	temps.append(m_Address);
-	temps.append(")连接成功");
-	Log(temps);
+	Log("与CCenterClientSocket(" + m_Address + ")连接成功");
 	SendRegisterServer();
 }
 
 void CCenterClientSocket::OnSocketDisconnect(void* Sender)
 {
-	std::string temps("与CCenterClientSocket(");
-	temps.append(m_Address);
-	temps.append(")断开连接");
-	Log(temps);
+	Log("与CCenterClientSocket(" + m_Address + ")断开连接");
 }
 
 void CCenterClientSocket::OnSocketRead(void* Sender, const char* pBuf, int iCount)
@@ -143,11 +137,7 @@ void CCenterClientSocket::OnSocketRead(void* Sender, const char* pBuf, int iCoun
 	//在基类解析外层数据包，并调用ProcessReceiveMsg完成逻辑消息处理
 	int iErrorCode = ParseSocketReadData(1, pBuf, iCount);
 	if (iErrorCode > 0)
-	{
-		std::string temps("CCenterClientSocket Socket Read Error, Code = ");
-		temps.append(to_string(iErrorCode));
-		Log(temps, lmtError);
-	}
+		Log("CCenterClientSocket Socket Read Error, Code = " + to_string(iErrorCode), lmtError);
 }
 
 void CCenterClientSocket::ProcessReceiveMsg(PServerSocketHeader pHeader, const char* pData, int iDataLen)
@@ -223,7 +213,7 @@ void CCenterClientSocket::SendRegisterServer()
 		nPort := G_GateSocket.Port;
 	  end;
 	*/
-	SendToServerPeer(SM_REGISTER, 0, (char*)&address, sizeof(TServerAddress));
+	SendToServerPeer(SM_REGISTER, 0, &address, sizeof(TServerAddress));
 }
 
 /************************End Of CCenterClientSocket********************************************/

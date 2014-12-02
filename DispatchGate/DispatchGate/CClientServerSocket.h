@@ -26,7 +26,7 @@ public:
 	int GetEncodeIdx();
 	int GetClientType();
 	unsigned char GetNetType();
-	void SendToClientPeer(unsigned short usIdent, char* pData, unsigned short usDataLen);
+	void SendToClientPeer(unsigned short usIdent, void* pData, unsigned short usDataLen);
 protected:
 	virtual void Execute(unsigned long ulTick);
 	virtual void SocketRead(const char* pBuf, int iCount);

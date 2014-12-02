@@ -172,7 +172,7 @@ void CDGClient::CMSelectServer(char* pBuf, unsigned short usBufLen)
 	else
 	{
 		OpenWindow(cwMessageBox, 0, "选择服务器失败");
-		std::string temps("选服务器失败: Area = ");
+		std::string temps("选服务器失败: ServerID = ");
 		temps.append(to_string(m_usSelectMaskServerID));
 		Log(temps);
 		return;
@@ -201,7 +201,7 @@ void CDGClient::CMSelectServer(char* pBuf, unsigned short usBufLen)
 			}
 		}
 		if (address.iPort > 0)
-			SendToClientPeer(SCM_RESSERVER_INFO, (char*)&address, sizeof(TServerAddress));
+			SendToClientPeer(SCM_RESSERVER_INFO, &address, sizeof(TServerAddress));
 	}
 }
 
@@ -219,7 +219,7 @@ void CDGClient::CMCloseWindow(char* pBuf, unsigned short usBufLen)
 	}
 }
 
-void CDGClient::SendToClientPeer(unsigned short usIdent, char* pData, unsigned short usDataLen)
+void CDGClient::SendToClientPeer(unsigned short usIdent, void* pData, unsigned short usDataLen)
 {
 	unsigned short usBufLen = sizeof(TClientSocketHead)+usDataLen;
 	char* pBuf = (char*)malloc(usBufLen);
@@ -249,7 +249,6 @@ void CDGClient::SendToClientPeer(unsigned short usIdent, char* pData, unsigned s
 CClientServerSocket::CClientServerSocket() :m_ulLastCheckTick(0), m_iIPConfigFileAge(0), m_DefaultRule(itUnKnow), m_sWarWarning("")				 
 {
 	SendDebugString("CClientServerSocket 创建");
-	//m_OnCheckAddress = std::bind(&CClientServerSocket::OnCheckIPAddress, this, std::placeholders::_1);
 	m_OnCreateClient = std::bind(&CClientServerSocket::OnCreateClientSocket, this, std::placeholders::_1);
 	m_OnClientError = std::bind(&CClientServerSocket::OnSocketError, this, std::placeholders::_1, std::placeholders::_2);
 	m_OnConnect = std::bind(&CClientServerSocket::OnClientConnect, this, std::placeholders::_1);

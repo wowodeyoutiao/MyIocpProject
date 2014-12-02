@@ -21,7 +21,8 @@ public:
 	virtual ~CDBConnector();
 	int GetServerID();
 	int GetPlayerCount();
-	void SendToClientPeer(unsigned short usIdent, int iParam, char* pBuf, unsigned short usBufLen);
+	std::string& GetServerName();
+	void SendToClientPeer(unsigned short usIdent, int iParam, void* pBuf, unsigned short usBufLen);
 	void AddIpRuleNode(const std::string& sIP, TIpType ipType);
 	bool CheckClientIP(const std::string& sIP);
 protected:
@@ -55,7 +56,7 @@ public:
 	void LoadConfig(CWgtIniFile* pIniFileParser);
 	int SelectServer(CDGClient &client);
 	void SendSelectServer(CDGClient &client);
-	void SendAreaInfoToPig(CPigClientSocket &pigClient);
+	void SendServerInfoToPig(CPigClientSocket* pPigClient);
 	void SendPigMsg(const char* pBuf, unsigned short usBufLen);
 	int GetPlayerTotalCount();
 protected:
@@ -83,8 +84,8 @@ private:
 	std::string m_sServerName;
 	int m_iConfigFileAge;
 	unsigned long m_ulLastCheckTick;
-	CC_UTILS::CLogSocket m_LogSocket;			//  连接日志服务的端口
-	CC_UTILS::CStringHash m_ServerHash;         //  区组列表 
+	CC_UTILS::CLogSocket* m_pLogSocket;			// 连接日志服务的端口
+	CC_UTILS::CStringHash m_ServerHash;         // 区组列表 
 };
 
 #endif //__CC_DB_SERVER_SOCKET_H__

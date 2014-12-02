@@ -331,7 +331,7 @@ CClientConnector :: ~CClientConnector()
 	delete(m_pReceiveBuffer);
 }
 
-std::string CClientConnector::GetRemoteAddress()
+std::string& CClientConnector::GetRemoteAddress()
 {
 	return m_sRemoteAddress;
 }
