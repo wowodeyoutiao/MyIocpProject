@@ -141,10 +141,7 @@ void CDGClient::OpenWindow(TClientWindowType wtype, int iParam, const std::strin
 		((PClientWindowRec)pData)->WinType = wtype;
 		((PClientWindowRec)pData)->Param = iParam;
 		if (iStrLen > 0)
-		{
-			memcpy((void*)pData[sizeof(TClientWindowRec)], msg.c_str(), iStrLen);
-			pData[iDataLen - 1] = '\0';
-		}
+			memcpy((void*)pData[sizeof(TClientWindowRec)], msg.c_str(), iStrLen + 1);
 		SendToClientPeer(SCM_OPEN_WINDOW, pData, iDataLen);
 		free(pData);
 	}

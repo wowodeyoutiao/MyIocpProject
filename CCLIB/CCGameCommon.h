@@ -23,7 +23,10 @@ ORDER_ID_MAX_LEN  = 33;                                   //单号最大长度
 OBJECT_NAME_MAX_LEN = 32;                                 //对象名字最大长度
 PASSWORD_MAX_LEN  = 33;                                   //密码最大长度
 */
-const int ACCOUNT_MAX_LEN = 50;                         //帐户最大长度
-const int ACTOR_NAME_MAX_LEN = 32;                      //角色最大长度
+const int ACCOUNT_MAX_LEN = 50;                           //帐户最大长度
+const int ACTOR_NAME_MAX_LEN = 32;                        //角色最大长度
+
+const int IP_ADDRESS_MAX_LEN = 15;		   				  //ip地址长度
+const int SERVER_NAME_MAX_LEN = 50;                       //服务器名最大长度
 
 #endif //__CC_GAME_COMMON_H__

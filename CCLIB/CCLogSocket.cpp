@@ -66,14 +66,14 @@ namespace CC_UTILS{
 		TAddLabelSendRec rec;
 		if (m_ClientSocket.IsConnected())
 		{
-			memset((char *)&rec, 0, sizeof(rec));
+			memset(&rec, 0, sizeof(rec));
 			rec.head.ulSign = LOG_SEGMENTATION_SIGN;
 			rec.head.usIdent = SMM_ADD_LABEL;
 			rec.head.usBehindLen = sizeof(TLogLabelInfo);
 			rec.info.iLeft = iLeft;
 			rec.info.iTop = iTop;
 			rec.info.iTag = iTag;
-			memcpy_s(rec.info.szCaption, LABEL_CAPTION_LENGTH, sDesc.c_str(), sDesc.length());
+			memcpy_s(rec.info.szCaption, sizeof(rec.info.szCaption), sDesc.c_str(), sDesc.length() + 1);
 		}
 		m_ClientSocket.SendBuf((char*)&rec, sizeof(rec));
 	}
@@ -89,12 +89,12 @@ namespace CC_UTILS{
 		TUpdateLabelSendRec rec;
 		if (m_ClientSocket.IsConnected())
 		{
-			memset((char *)&rec, 0, sizeof(rec));
+			memset(&rec, 0, sizeof(rec));
 			rec.head.ulSign = LOG_SEGMENTATION_SIGN;
 			rec.head.usIdent = SMM_UPDATE_LABEL;
 			rec.head.usBehindLen = sizeof(TUpdateLabelInfo);
 			rec.info.iTag = iTag;
-			memcpy_s(rec.info.szValue, LABEL_CAPTION_LENGTH, sDesc.c_str(), sDesc.length());
+			memcpy_s(rec.info.szValue, sizeof(rec.info.szValue), sDesc.c_str(), sDesc.length() + 1);
 		}
 		m_ClientSocket.SendBuf((char*)&rec, sizeof(rec));
 	}
@@ -110,7 +110,7 @@ namespace CC_UTILS{
 		TAddListViewSendRec rec;
 		if (m_ClientSocket.IsConnected())
 		{
-			memset((char *)&rec, 0, sizeof(rec));
+			memset(&rec, 0, sizeof(rec));
 			rec.head.ulSign = LOG_SEGMENTATION_SIGN;
 			rec.head.usIdent = SMM_ADD_LISTVIEW;
 			rec.head.usBehindLen = sizeof(TListViewInfo);
@@ -149,13 +149,13 @@ namespace CC_UTILS{
 		TUpdateListViewSendRec rec;
 		if (m_ClientSocket.IsConnected())
 		{
-			memset((char *)&rec, 0, sizeof(rec));
+			memset(&rec, 0, sizeof(rec));
 			rec.head.ulSign = LOG_SEGMENTATION_SIGN;
 			rec.head.usIdent = SMM_UPDATE_LISTVIEW;
 			rec.head.usBehindLen = sizeof(TUpdateViewInfo);
 			rec.info.usRow = usRow;
 			rec.info.usCol = usCol;
-			memcpy_s(rec.info.value, SERVICE_NAME_LENGTH, sDesc.c_str(), sDesc.length());
+			memcpy_s(rec.info.value, sizeof(rec.info.value), sDesc.c_str(), sDesc.length() + 1);
 		}
 		m_ClientSocket.SendBuf((char*)&rec, sizeof(rec));
 	}
@@ -173,8 +173,7 @@ namespace CC_UTILS{
 		if ((LOG_TYPE_ERROR == iType) || (LOG_TYPE_EXCEPTION == iType))
 			EventReportError(msg);
 		*/
-		int iMsgLen = sMsg.length();
-		int iBufLen = sizeof(TLogSocketHead) + 1 + iMsgLen;
+		int iBufLen = sizeof(TLogSocketHead) + 1 + sMsg.length() + 1;
 		char* pBuf = (char*)malloc(iBufLen);
 		((PLogSocketHead)pBuf)->ulSign = LOG_SEGMENTATION_SIGN;
 		((PLogSocketHead)pBuf)->usIdent = SMM_DEBUG_MESSAGE;
@@ -182,7 +181,7 @@ namespace CC_UTILS{
 
 		char* pb = pBuf + sizeof(TLogSocketHead);
 		*pb = iType;
-		memcpy((pBuf + sizeof(TLogSocketHead) + 1), sMsg.c_str(), iMsgLen);
+		memcpy((pBuf + sizeof(TLogSocketHead)+1), sMsg.c_str(), sMsg.length() + 1);
 
 		if ((m_ClientSocket.IsConnected()) && (m_sServiceName != ""))
 			m_ClientSocket.SendBuf(pBuf, iBufLen, true);
@@ -228,7 +227,8 @@ namespace CC_UTILS{
 		((PLogSocketHead)pBuf)->usIdent = SMM_TRACE_DATA;
 		((PLogSocketHead)pBuf)->usBehindLen = usSendLen - sizeof(TLogSocketHead);
 		memset((pTempBuf + sizeof(TLogSocketHead)), 0, sizeof(TTraceData));
-		memcpy_s(((PTraceData)(pTempBuf + sizeof(TLogSocketHead)))->szRoleName, ACTOR_NAME_MAX_LEN, sRoleName.c_str(), sRoleName.length());
+		PTraceData pData = (PTraceData)(pTempBuf + sizeof(TLogSocketHead));
+		memcpy_s(pData->szRoleName, sizeof(pData->szRoleName), sRoleName.c_str(), sRoleName.length() + 1);
 		if ((pBuf != nullptr) && (usBufLen > 0))
 			memcpy(pTempBuf+sizeof(TLogSocketHead)+sizeof(TTraceData), pBuf, usBufLen);
 		m_ClientSocket.SendBuf(pTempBuf, usBufLen, true);
@@ -301,8 +301,8 @@ namespace CC_UTILS{
 
 		std::string version = CC_UTILS::GetFileVersion(G_CurrentExeFileName);
 		PRegisterInfo pInfo = (PRegisterInfo)(pBuf + sizeof(TLogSocketHead));
-		memcpy_s(pInfo->szServiceName, SERVICE_NAME_LENGTH, m_sServiceName.c_str(), m_sServiceName.length());
-		memcpy_s(pInfo->szVersion, LABEL_CAPTION_LENGTH, version.c_str(), version.length());
+		memcpy_s(pInfo->szServiceName, sizeof(pInfo->szServiceName), m_sServiceName.c_str(), m_sServiceName.length() + 1);
+		memcpy_s(pInfo->szVersion, sizeof(pInfo->szVersion), version.c_str(), version.length() + 1);
 		m_ClientSocket.SendBuf(pBuf, iBufLen, true);
 	}
 
@@ -318,8 +318,8 @@ namespace CC_UTILS{
 
 		std::string version = CC_UTILS::GetFileVersion(G_CurrentExeFileName);
 		PRegisterInfoEx pInfo = (PRegisterInfoEx)(pBuf + sizeof(TLogSocketHead));
-		memcpy_s(pInfo->BaseInfo.szServiceName, SERVICE_NAME_LENGTH, m_sServiceName.c_str(), m_sServiceName.length());
-		memcpy_s(pInfo->BaseInfo.szVersion, LABEL_CAPTION_LENGTH, version.c_str(), version.length());
+		memcpy_s(pInfo->BaseInfo.szServiceName, sizeof(pInfo->BaseInfo.szServiceName), m_sServiceName.c_str(), m_sServiceName.length() + 1);
+		memcpy_s(pInfo->BaseInfo.szVersion, sizeof(pInfo->BaseInfo.szVersion), version.c_str(), version.length() + 1);
 
 		//---------------------------------
 		//---------------------------------

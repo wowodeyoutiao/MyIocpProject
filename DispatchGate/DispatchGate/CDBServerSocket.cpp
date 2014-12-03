@@ -32,6 +32,21 @@ std::string& CDBConnector::GetServerName()
 	return m_sServerName;
 }
 
+std::string& CDBConnector::GetDenyHint()
+{
+	return m_sDenyHint;
+}
+
+TIpType CDBConnector::GetDefaultRule()
+{
+	return m_DefaultRule;
+}
+
+void CDBConnector::SetServerName(const std::string& sName)
+{
+	m_sServerName = sName;
+}
+
 void CDBConnector::SendToClientPeer(unsigned short usIdent, int iParam, void* pBuf, unsigned short usBufLen)
 {
 	int iDataLen = sizeof(TServerSocketHeader) + usBufLen;
@@ -281,10 +296,10 @@ m_iConfigFileAge(0), m_ulLastCheckTick(0), m_pLogSocket(nullptr), m_ServerHash(5
 	SetMaxCorpseTime(60 * 1000);
 	m_ServerHash.m_RemoveEvent = std::bind(&CDBServerSocket::RemoveServerInfo, this, std::placeholders::_1, std::placeholders::_2);
 
-	m_OnCreateClient = std::bind(&CDBServerSocket::OnCreateClientSocket, this, std::placeholders::_1);
+	m_OnCreateClient = std::bind(&CDBServerSocket::OnCreateDBSocket, this, std::placeholders::_1);
 	m_OnClientError = std::bind(&CDBServerSocket::OnSocketError, this, std::placeholders::_1, std::placeholders::_2);
-	m_OnConnect = std::bind(&CDBServerSocket::OnClientConnect, this, std::placeholders::_1);
-	m_OnDisConnect = std::bind(&CDBServerSocket::OnClientDisconnect, this, std::placeholders::_1);
+	m_OnConnect = std::bind(&CDBServerSocket::OnDBConnect, this, std::placeholders::_1);
+	m_OnDisConnect = std::bind(&CDBServerSocket::OnDBDisconnect, this, std::placeholders::_1);
 	m_OnCheckAddress = std::bind(&CDBServerSocket::OnCheckIPAddress, this, std::placeholders::_1);
 }
 
@@ -297,7 +312,7 @@ CDBServerSocket::~CDBServerSocket()
 
 void CDBServerSocket::LoadConfig(CWgtIniFile* pIniFileParser)
 {
-	LoadAreaConfig();
+	LoadServerConfig();
 	int iPort = pIniFileParser->getInteger("Setup", "DBPort", DEFAULT_DispatchGate_DB_PORT);
 	if (!IsActive())
 	{
@@ -308,12 +323,82 @@ void CDBServerSocket::LoadConfig(CWgtIniFile* pIniFileParser)
 	}
 }
 
-int CDBServerSocket::SelectServer(CDGClient &client)
+int CDBServerSocket::SelectServer(CDGClient* pClient)
 {
+	int iRetCode = 0;
+	if (nullptr == pClient)
+		return iRetCode;
 
+	int iErrCode = -1;
+	int iServerID = 0;
+	int iMaskID = pClient->GetSelectMaskServerID();
+	{		
+		PServerConfigInfo pInfo = nullptr;
+		std::lock_guard<std::mutex> guard(m_LockCS);
+		m_ServerHash.First();
+		while (!m_ServerHash.Eof())
+		{
+			pInfo = (PServerConfigInfo)m_ServerHash.GetNextNode();
+			if (iMaskID == pInfo->iMaskServerID)
+			{
+				iServerID = pInfo->iRealServerID;
+				break;
+			}
+		}
+	}
+
+	std::string sHintMsg;
+	if (iServerID > 0)
+	{
+		iErrCode = -2;
+		CDBConnector* pDBConnector = nullptr;
+		std::lock_guard<std::mutex> guard(m_LockCS);
+		std::list<void*>::iterator vIter;
+		for (vIter = m_ActiveConnects.begin(); vIter != m_ActiveConnects.end(); ++vIter)
+		{
+			pDBConnector = (CDBConnector*)*vIter;
+			if (iServerID == pDBConnector->GetServerID())
+			{
+				if ((pClient->GetIsGMIP()) || (pDBConnector->CheckClientIP(pClient->GetRemoteAddress())))
+				{
+					iErrCode = 0;
+					iRetCode = iServerID;
+				}
+				else
+				{
+					iErrCode = -3;
+					if (itDeny == pDBConnector->GetDefaultRule())
+						sHintMsg = pDBConnector->GetDenyHint();
+					else
+						sHintMsg = "您被禁止进入!";
+				}
+				break;
+			}
+		}
+	}
+
+	if ((iErrCode != 0) && (pClient != nullptr))
+	{
+		switch (iErrCode)
+		{
+		case -1:
+			sHintMsg = "您所选的区组错误!";
+			break;
+		case -2:
+			sHintMsg = "目前服务器处于维护中!";
+			break;
+		default:
+			break;
+		}
+
+		pClient->OpenWindow(cwMessageBox, iErrCode, sHintMsg);
+		pClient->ForceClose();
+	}
+
+	return iRetCode;
 }
 
-void CDBServerSocket::SendSelectServer(CDGClient &client)
+void CDBServerSocket::SendSelectServer(CDGClient* pClient)
 {
 	CDBConnector* pDBConnector = nullptr;
 	TClientSelectServerInfo cInfo;
@@ -322,15 +407,15 @@ void CDBServerSocket::SendSelectServer(CDGClient &client)
 	for (vIter = m_ActiveConnects.begin(); vIter != m_ActiveConnects.end(); ++vIter)
 	{
 		pDBConnector = (CDBConnector*)*vIter;
-		if ((pDBConnector != nullptr) && (pDBConnector->GetServerID() == client.GetSelectRealServerID()))
+		if ((pDBConnector != nullptr) && (pClient != nullptr) && (pDBConnector->GetServerID() == pClient->GetSelectRealServerID()))
 		{
 			cInfo.iSessionID = m_iSessionID;
-			cInfo.iEnCodeIdx = client.GetEncodeIdx();
-			cInfo.iClientType = client.GetClientType();
-			cInfo.bMasterIP = client.GetIsGMIP();
-			cInfo.iSelectServerID = client.GetSelectMaskServerID();
-			cInfo.ucNetType = client.GetNetType();
-			pDBConnector->SendToClientPeer(SM_SELECT_SERVER, client.GetSocketHandle(), &cInfo, sizeof(TClientSelectServerInfo));
+			cInfo.iEnCodeIdx = pClient->GetEncodeIdx();
+			cInfo.iClientType = pClient->GetClientType();
+			cInfo.bMasterIP = pClient->GetIsGMIP();
+			cInfo.iSelectServerID = pClient->GetSelectMaskServerID();
+			cInfo.ucNetType = pClient->GetNetType();
+			pDBConnector->SendToClientPeer(SM_SELECT_SERVER, pClient->GetSocketHandle(), &cInfo, sizeof(TClientSelectServerInfo));
 
 			++m_iSessionID;
 			if (m_iSessionID < 0)
@@ -348,6 +433,7 @@ void CDBServerSocket::SendServerInfoToPig(CPigClientSocket* pPigClient)
 	TPigQueryServerInfo info;
 	std::lock_guard<std::mutex> guard(m_LockCS);
 	std::list<void*>::iterator vIter;
+	std::string sTemp;
 	for (vIter = m_ActiveConnects.begin(); vIter != m_ActiveConnects.end(); ++vIter)
 	{
 		pDBConnector = (CDBConnector*)*vIter;
@@ -355,8 +441,10 @@ void CDBServerSocket::SendServerInfoToPig(CPigClientSocket* pPigClient)
 		{
 			memset(&info, 0, sizeof(TPigQueryServerInfo));
 			info.iServerID = pDBConnector->GetServerID();
-			memcpy_s(info.szServerIP, 15, pDBConnector->GetRemoteAddress().c_str(), pDBConnector->GetRemoteAddress().length());
-			memcpy_s(info.szServerIP, 50, pDBConnector->GetServerName().c_str(), pDBConnector->GetServerName().length());
+			sTemp = pDBConnector->GetRemoteAddress();
+			memcpy_s(info.szServerIP, sizeof(info.szServerIP), sTemp.c_str(), sTemp.length() + 1);
+			sTemp = pDBConnector->GetServerName();
+			memcpy_s(info.szServerName, sizeof(info.szServerName), sTemp.c_str(), sTemp.length() + 1);
 			pPigClient->SendToServerPeer(SM_PIG_QUERY_AREA, 0, &info, sizeof(TPigQueryServerInfo));
 		}
 	}
@@ -364,72 +452,227 @@ void CDBServerSocket::SendServerInfoToPig(CPigClientSocket* pPigClient)
 
 void CDBServerSocket::SendPigMsg(const char* pBuf, unsigned short usBufLen)
 {
-
+	/*
+var
+  sMsg, sAreaList   : AnsiString;
+  pCur, pData       : PAnsiChar;
+  i, iDataLen       : Integer;
+  DBServer          : TDBServer;
+  AreaList          : TStringList;
+begin
+  if BufLen > SizeOf(TPigMsgData) then
+  begin
+    pCur := Buf;
+    sMsg := '';
+    sAreaList := '';
+    with PPigMsgData(Buf)^ do
+    begin
+      if BufLen < wAreaLen + wMsgLen then
+      begin
+        Log(Format('PigMsg 数据长度错误！', [BufLen, wAreaLen + wMsgLen]));
+        Exit;
+      end;
+      Inc(pCur, SizeOf(TPigMsgData));
+      if wAreaLen > 0 then
+      begin
+        SetString(sAreaList, pCur, wAreaLen);
+        sAreaList := PAnsiChar(sAreaList);
+      end;
+      Inc(pCur, wAreaLen);
+      if wMsgLen > 0 then
+      begin
+        SetString(sMsg, pCur, wMsgLen);
+        sMsg := PAnsiChar(sMsg);
+      end;
+    end;
+    if (sAreaList = '') or (sMsg = '') then
+      Exit;
+    iDataLen := SizeOf(TPkgMsgHead) + Length(sMsg) + 10;
+    AreaList := TStringList.Create;
+    AreaList.Text := StringReplace(sAreaList, '|', #13#10, [rfReplaceAll]);
+    GetMem(pData, iDataLen);
+    try
+      iDataLen := MakeMsgPkg(pData, sMsg, TMesssageType(PPigMsgData(Buf)^.MsgType), 255, 255, True, 0);
+      Lock;
+      try
+        for i := 0 to ActiveConnects.Count - 1 do
+        begin
+          DBServer := ActiveConnects[i];
+          if (DBServer.ServerID <> 0) and (AreaList.IndexOf(IntToStr(DBServer.ServerID)) > -1) then
+          begin
+            DBServer.SendBuffer(SM_PIG_MSG, 0, pData, iDataLen);
+          end;
+        end;
+      finally
+        UnLock;
+      end;
+    finally
+      FreeMem(pData);
+      AreaList.Free;
+    end;
+  end;
+end;
+	*/
 }
 
 int CDBServerSocket::GetPlayerTotalCount()
 {
-
+	CDBConnector* pDBConnector = nullptr;
+	int retCount = 0;
+	std::lock_guard<std::mutex> guard(m_LockCS);
+	std::list<void*>::iterator vIter;
+	for (vIter = m_ActiveConnects.begin(); vIter != m_ActiveConnects.end(); ++vIter)
+	{
+		pDBConnector = (CDBConnector*)*vIter;
+		if (pDBConnector != nullptr)
+			retCount += pDBConnector->GetPlayerCount();
+	}
+	return retCount;
 }
 
 void CDBServerSocket::DoActive()
 {
-
+	CIOCPServerSocketManager::DoActive();
+	LoadServerConfig();
 }
 
 bool CDBServerSocket::OnCheckIPAddress(const std::string& sIP)
 {
-
+	return (m_sAllowDBServerIP.find(sIP) != string::npos);
 }
 
-CClientConnector* CDBServerSocket::OnCreateClientSocket(const std::string& sIP)
+CClientConnector* CDBServerSocket::OnCreateDBSocket(const std::string& sIP)
 {
-
+	return new CDBConnector;
 }
 
 void CDBServerSocket::OnSocketError(void* Sender, int& iErrorCode)
 {
-
+	Log("Server Socket Error, Code = " + to_string(iErrorCode), lmtError);
+	iErrorCode = 0;
 }
 
-void CDBServerSocket::OnClientConnect(void* Sender)
+void CDBServerSocket::OnDBConnect(void* Sender)
 {
-
+	CDBConnector* pDBConnector = (CDBConnector*)Sender;
+	Log(pDBConnector->GetRemoteAddress() + " Connected.");
 }
 
-void CDBServerSocket::OnClientDisconnect(void* Sender)
+void CDBServerSocket::OnDBDisconnect(void* Sender)
 {
-
+	CDBConnector* pDBConnector = (CDBConnector*)Sender;
+	Log(pDBConnector->GetRemoteAddress() + " DisConnected.");
+	ShowDBMsg(pDBConnector->GetServerID(), 3, "--");
+	ShowDBMsg(pDBConnector->GetServerID(), 4, "--");
 }
 
 void CDBServerSocket::OnSetListView(void* Sender)
 {
-
+	PServerConfigInfo pInfo = nullptr;
+	std::string sTemp;
+	TListViewInfo lvInfo;
+	memset(&lvInfo, 0, sizeof(TListViewInfo));
+	{
+		std::lock_guard<std::mutex> guard(m_LockCS);
+		m_ServerHash.First();
+		while (!m_ServerHash.Eof())
+		{
+			pInfo = (PServerConfigInfo)m_ServerHash.GetNextNode();
+			sTemp = std::to_string(pInfo->iMaskServerID);
+			memcpy_s(lvInfo[0], sizeof(TShortValue), sTemp.c_str(), sTemp.length() + 1);
+			sTemp = pInfo->sServerName;
+			memcpy_s(lvInfo[1], sizeof(TShortValue), sTemp.c_str(), sTemp.length() + 1);
+			sTemp = std::to_string(pInfo->iRealServerID);
+			memcpy_s(lvInfo[2], sizeof(TShortValue), sTemp.c_str(), sTemp.length() + 1);
+			sTemp = OnLineDBServer(pInfo->iRealServerID);
+			memcpy_s(lvInfo[3], sizeof(TShortValue), sTemp.c_str(), sTemp.length() + 1);
+			sTemp = "--";
+			memcpy_s(lvInfo[4], sizeof(TShortValue), sTemp.c_str(), sTemp.length() + 1);
+			if (m_pLogSocket != nullptr)
+				m_pLogSocket->AddListView(&lvInfo);
+		}
+	}
+	sTemp = "区号";
+	memcpy_s(lvInfo[0], sizeof(TShortValue), sTemp.c_str(), sTemp.length() + 1);
+	sTemp = "     区名     ";
+	memcpy_s(lvInfo[1], sizeof(TShortValue), sTemp.c_str(), sTemp.length() + 1);
+	sTemp = "服务器编号";
+	memcpy_s(lvInfo[2], sizeof(TShortValue), sTemp.c_str(), sTemp.length() + 1);
+	sTemp = "    连接地址    ";
+	memcpy_s(lvInfo[3], sizeof(TShortValue), sTemp.c_str(), sTemp.length() + 1);
+	sTemp = "  人数  ";
+	memcpy_s(lvInfo[4], sizeof(TShortValue), sTemp.c_str(), sTemp.length() + 1);
+	if (m_pLogSocket != nullptr)
+		m_pLogSocket->SetListViewColumns(&lvInfo);
 }
 
-void CDBServerSocket::LoadAreaConfig()
+void CDBServerSocket::LoadServerConfig()
 {
 
 }
 
-bool CDBServerSocket::RegisterDBServer(const std::string &sAddress, int iServerID, CDBConnector &dbServer)
+bool CDBServerSocket::RegisterDBServer(const std::string &sAddress, int iServerID, CDBConnector* pDBServer)
 {
-
+	bool retFlag = false;
+	PServerConfigInfo pInfo = nullptr;
+	std::lock_guard<std::mutex> guard(m_LockCS);
+	m_ServerHash.First();
+	while (!m_ServerHash.Eof())
+	{
+		pInfo = (PServerConfigInfo)m_ServerHash.GetNextNode();
+		if (iServerID == pInfo->iRealServerID)
+		{
+			if (pInfo->sServerIP.find(sAddress) == string::npos)
+				Log("DBServer " + sAddress + " not in " + pInfo->sServerIP, lmtWarning);
+			if (pDBServer != nullptr)
+				pDBServer->SetServerName(pInfo->sServerName);
+			retFlag = true;
+			break;
+		}
+	}
+	return retFlag;
 }
 
 void CDBServerSocket::ShowDBMsg(int iServerID, int iCol, const std::string &msg)
 {
-
+	int iRow = 1;
+	PServerConfigInfo pInfo = nullptr;
+	std::lock_guard<std::mutex> guard(m_LockCS);
+	m_ServerHash.First();
+	while (!m_ServerHash.Eof())
+	{
+		pInfo = (PServerConfigInfo)m_ServerHash.GetNextNode();
+		if (pInfo->iRealServerID == iServerID)
+		{
+			if (m_pLogSocket != nullptr)
+				m_pLogSocket->UpdateListView(msg, iRow, iCol);
+			break;
+		}
+		++iRow;
+	}
 }
 
 std::string CDBServerSocket::OnLineDBServer(int iServerID)
 {
-
+	std::string sRetStr("--");
+	CDBConnector* pDBConnector = nullptr;
+	std::lock_guard<std::mutex> guard(m_LockCS);
+	std::list<void*>::iterator vIter;
+	for (vIter = m_ActiveConnects.begin(); vIter != m_ActiveConnects.end(); ++vIter)
+	{
+		pDBConnector = (CDBConnector*)*vIter;
+		if ((pDBConnector != nullptr) && (iServerID == pDBConnector->GetServerID()))
+		{
+			sRetStr = pDBConnector->GetRemoteAddress();
+			break;
+		}	
+	}
+	return sRetStr;
 }
 
 void CDBServerSocket::RemoveServerInfo(void* pValue, const std::string &sKey)
 {
-
+	delete (PServerConfigInfo)pValue;
 }
 
 //-------------------------------------------------

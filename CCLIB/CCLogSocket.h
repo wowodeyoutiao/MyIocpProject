@@ -9,6 +9,7 @@
 #include <list>
 #include "CCTcpSocketCommon.h"
 #include "CCTcpClientSocket.h"
+#include "CCProtocol_Server.h"
 #include "CCGameCommon.h"
 
 namespace CC_UTILS{
@@ -51,7 +52,7 @@ namespace CC_UTILS{
 	typedef struct _TRegisterInfo
 	{
 		char szServiceName[SERVICE_NAME_LENGTH + 1];
-		char szIPAddress[16 + 1];
+		char szIPAddress[IP_ADDRESS_MAX_LEN + 1];
 		char szVersion[LABEL_CAPTION_LENGTH + 1];
 	}TRegisterInfo, *PRegisterInfo;
 
@@ -73,7 +74,7 @@ namespace CC_UTILS{
 		int iLeft;
 		int iTop;
 		int iTag;
-		char szCaption[LABEL_CAPTION_LENGTH+1];
+		char szCaption[LABEL_CAPTION_LENGTH + 1];
 	}TLogLabelInfo, *PLogLabelInfo;
 
 	//SMM_UPDATE_LABEL  (Service -> Monitor IN) 来自Service
@@ -115,7 +116,10 @@ namespace CC_UTILS{
 	//SMM_TRACE_DATA
 	typedef struct _TTraceData
 	{
-		char szRoleName[ACTOR_NAME_MAX_LEN];
+		//------------------------------------
+		//这里的长度比原来多1
+		//------------------------------------
+		char szRoleName[ACTOR_NAME_MAX_LEN + 1];
 	}TTraceData, *PTraceData;
 
 	typedef struct _TWaitBufferNode

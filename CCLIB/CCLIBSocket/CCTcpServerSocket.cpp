@@ -180,7 +180,7 @@ void CMainIOCPWorker :: DoExecute()
 			}
 
 			SOCKADDR_IN ToAddress; 			
-			memset((char *)&ToAddress, 0, sizeof(ToAddress));
+			memset(&ToAddress, 0, sizeof(ToAddress));
 			int iAddressLen = sizeof(ToAddress);
 			//有条件地接受一个连接基于状态函数的返回值,选择创建或加入一个套接字组
 			stClientSocket = WSAAccept(m_Socket, (sockaddr*)&ToAddress, &iAddressLen, &ConditionFunc, (unsigned long)m_Parent);
@@ -278,7 +278,7 @@ bool CMainIOCPWorker :: Start(const std::string& sIP, int iPort)
 		if (m_Socket != INVALID_SOCKET)
 		{
 			SOCKADDR_IN Addr; 
-			memset((char *)&Addr, 0, sizeof(Addr));
+			memset(&Addr, 0, sizeof(Addr));
 			Addr.sin_family = AF_INET;
 			if ((sIP.compare("") == 0) || (sIP.compare("0.0.0.0") == 0))
 				Addr.sin_addr.s_addr = INADDR_ANY;
@@ -365,12 +365,15 @@ int CClientConnector :: SendBuf(const char* pBuf, int iCount)
 int CClientConnector :: SendText(const std::string& s)
 {
 	int iSendLen = 0;
-	int iBufLen = s.length();
-	if (iBufLen > 0)
+	int iStrLen = s.length();
+	if (iStrLen > 0)
 	{
-		char* pBuf = (char*)malloc(iBufLen);
-		memcpy(pBuf, s.c_str(), iBufLen);
-		iSendLen = SendBuf(pBuf, iBufLen);
+		//------------------------------------
+		//------------------------------------
+		//字符串结尾'/0'拷贝过来，但并未发送出去
+		char* pBuf = (char*)malloc(iStrLen + 1);
+		memcpy(pBuf, s.c_str(), iStrLen + 1);
+		iSendLen = SendBuf(pBuf, iStrLen);
 		free(pBuf);
 	}
 	return iSendLen;
@@ -404,7 +407,7 @@ void CClientConnector :: PrepareSend(int iUntreated, int iTransfered)
 		m_SendBlock.Event = soWrite;
 		m_SendBlock.wsaBuffer.len = iUntreated;
 		m_SendBlock.wsaBuffer.buf = m_SendBlock.Buffer;
-		memset((char*)&m_SendBlock.Overlapped, 0, sizeof(m_SendBlock.Overlapped));
+		memset(&m_SendBlock.Overlapped, 0, sizeof(m_SendBlock.Overlapped));
 		if (m_Socket != INVALID_SOCKET)
 		{
 			if (WSASend(m_Socket, &m_SendBlock.wsaBuffer, 1, (LPDWORD)&iTransfered, 0, &m_SendBlock.Overlapped, nullptr) == SOCKET_ERROR)
@@ -436,7 +439,7 @@ bool CClientConnector :: PrepareRecv()
 		m_RecvBlock.Event = soRead;
 		m_RecvBlock.wsaBuffer.len = MAX_IOCP_BUFFER_SIZE;
 		m_RecvBlock.wsaBuffer.buf = m_RecvBlock.Buffer;
-		memset((char*)&m_RecvBlock.Overlapped, 0, sizeof(m_RecvBlock.Overlapped));
+		memset(&m_RecvBlock.Overlapped, 0, sizeof(m_RecvBlock.Overlapped));
 		unsigned long ulFlag = 0;
 		unsigned long ulTransfered = 0;
 		if (m_Socket != INVALID_SOCKET)

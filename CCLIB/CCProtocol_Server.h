@@ -6,6 +6,8 @@
 #ifndef __CC_PROTOCOL_SERVER_H__
 #define __CC_PROTOCOL_SERVER_H__
 
+#include "CCGameCommon.h"
+
 // Server间通讯的协议头
 typedef struct _TServerSocketHeader
 {
@@ -27,7 +29,7 @@ typedef struct _TClientSelectServerInfo
 }TClientSelectServerInfo, *PClientSelectServerInfo;
 
 // ip地址的字符串类型
-typedef char TIPAddress[15];
+typedef char TIPAddress[IP_ADDRESS_MAX_LEN+1];
 typedef TIPAddress* PIPAddress;
 
 // 服务器地址类型
@@ -49,8 +51,8 @@ typedef struct _TServerConnectInfo
 typedef struct _TPigQueryServerInfo
 {
 	int iServerID;
-	char szServerIP[16];
-	char szServerName[51];
+	char szServerIP[IP_ADDRESS_MAX_LEN+1];
+	char szServerName[SERVER_NAME_MAX_LEN+1];
 }TPigQueryServerInfo, *PPigQueryServerInfo;
 
 

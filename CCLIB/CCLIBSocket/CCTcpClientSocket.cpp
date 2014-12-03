@@ -287,7 +287,7 @@ bool CNetworkEventClientSocketManager :: DoInitialize()
 			if (m_LocalAddress.length() > 0)
 			{
 				SOCKADDR_IN Addr; 
-				memset((char *)&Addr, 0, sizeof(Addr));
+				memset(&Addr, 0, sizeof(Addr));
 				Addr.sin_family = PF_INET;
 				Addr.sin_port = htons(INADDR_ANY);           
 				Addr.sin_addr.s_addr = inet_addr(m_LocalAddress.c_str()); 
@@ -396,7 +396,7 @@ bool CIOCPClientSocketManager :: DoInitialize()
 			if (m_LocalAddress.length() > 0)
 			{
 				SOCKADDR_IN Addr; 
-				memset((char *)&Addr, 0, sizeof(Addr));
+				memset(&Addr, 0, sizeof(Addr));
 				Addr.sin_family = PF_INET;
 				Addr.sin_port = htons(INADDR_ANY);           
 				Addr.sin_addr.s_addr = inet_addr(m_LocalAddress.c_str()); 
@@ -417,7 +417,7 @@ bool CIOCPClientSocketManager :: Open()
 	{
 		if (DoInitialize()) 
 		{
-			memset((char *)&m_SocketAddr, 0, sizeof(m_SocketAddr));
+			memset(&m_SocketAddr, 0, sizeof(m_SocketAddr));
 			m_SocketAddr.sin_family = AF_INET;
 			m_SocketAddr.sin_addr.s_addr = inet_addr(m_Address.c_str());
 			if (m_SocketAddr.sin_addr.s_addr == u_long(INADDR_NONE))
@@ -644,7 +644,7 @@ void CIOCPClientSocketManager :: PrepareSend(int iUntreated, int iTransfered)
 			m_SendBlock.Event = soWrite;
 			m_SendBlock.wsaBuffer.len = iUntreated;
 			m_SendBlock.wsaBuffer.buf = m_SendBlock.Buffer;
-			memset((char*)&m_SendBlock.Overlapped, 0, sizeof(m_SendBlock.Overlapped));
+			memset(&m_SendBlock.Overlapped, 0, sizeof(m_SendBlock.Overlapped));
 			if (WSASend(m_CSocket, &m_SendBlock.wsaBuffer, 1, (LPDWORD)&iTransfered, 0, &m_SendBlock.Overlapped, nullptr) == SOCKET_ERROR)
 			{
 				/*
@@ -668,7 +668,7 @@ bool CIOCPClientSocketManager :: PrepareRecv()
 		m_RecvBlock.Event = soRead;
 		m_RecvBlock.wsaBuffer.len = MAX_IOCP_BUFFER_SIZE;
 		m_RecvBlock.wsaBuffer.buf = m_RecvBlock.Buffer;
-		memset((char *)&m_RecvBlock.Overlapped, 0, sizeof(m_RecvBlock.Overlapped));
+		memset(&m_RecvBlock.Overlapped, 0, sizeof(m_RecvBlock.Overlapped));
 		unsigned int Flags = 0;
 		unsigned int Transfer = 0;
 		retflag = (WSARecv(m_CSocket, &m_RecvBlock.wsaBuffer, 1, (LPDWORD)&Transfer, (LPDWORD)&Flags, &m_RecvBlock.Overlapped, nullptr) != SOCKET_ERROR);

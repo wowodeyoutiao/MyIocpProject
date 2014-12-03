@@ -51,7 +51,7 @@ void CCenterClientSocket::LoadConfig(CWgtIniFile* pIniFileParser)
 			if (iPort > 0)
 			{
 				//∂Àø⁄±ÿ–Î≈‰÷√
-				memcpy_s(m_ServerArray[i].IPAddress, 15, vec[0].c_str(), vec[0].length());
+				memcpy_s(m_ServerArray[i].IPAddress, sizeof(m_ServerArray[i].IPAddress), vec[0].c_str(), vec[0].length() + 1);
 				m_ServerArray[i].iPort = iPort;
 				bConfigOK = true;
 			}

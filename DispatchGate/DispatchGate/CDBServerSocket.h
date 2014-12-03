@@ -9,6 +9,15 @@
 #include "CClientServerSocket.h"
 #include "CPigClientSocket.h"
 
+//dispatch上使用的服务器区组配置
+typedef struct _TServerConfigInfo
+{
+	int iMaskServerID;
+	std::string sServerName;
+	int iRealServerID;
+	std::string sServerIP;
+}TServerConfigInfo, *PServerConfigInfo;
+
 /**
 *
 * DispatchGate监听的单个DBServer的连接对象
@@ -22,6 +31,9 @@ public:
 	int GetServerID();
 	int GetPlayerCount();
 	std::string& GetServerName();
+	std::string& GetDenyHint();
+	TIpType GetDefaultRule();
+	void SetServerName(const std::string& sName);
 	void SendToClientPeer(unsigned short usIdent, int iParam, void* pBuf, unsigned short usBufLen);
 	void AddIpRuleNode(const std::string& sIP, TIpType ipType);
 	bool CheckClientIP(const std::string& sIP);
@@ -54,8 +66,8 @@ public:
 	CDBServerSocket(const std::string& sName);
 	virtual ~CDBServerSocket();
 	void LoadConfig(CWgtIniFile* pIniFileParser);
-	int SelectServer(CDGClient &client);
-	void SendSelectServer(CDGClient &client);
+	int SelectServer(CDGClient* pClient);
+	void SendSelectServer(CDGClient* pClient);
 	void SendServerInfoToPig(CPigClientSocket* pPigClient);
 	void SendPigMsg(const char* pBuf, unsigned short usBufLen);
 	int GetPlayerTotalCount();
@@ -63,14 +75,14 @@ protected:
 	virtual void DoActive();
 private:
 	bool OnCheckIPAddress(const std::string& sIP);
-	CClientConnector* OnCreateClientSocket(const std::string& sIP);
+	CClientConnector* OnCreateDBSocket(const std::string& sIP);
 	void OnSocketError(void* Sender, int& iErrorCode);
-	void OnClientConnect(void* Sender);
-	void OnClientDisconnect(void* Sender);
+	void OnDBConnect(void* Sender);
+	void OnDBDisconnect(void* Sender);
 	void OnSetListView(void* Sender);
 
-	void LoadAreaConfig();
-	bool RegisterDBServer(const std::string &sAddress, int iServerID, CDBConnector &dbServer);
+	void LoadServerConfig();
+	bool RegisterDBServer(const std::string &sAddress, int iServerID, CDBConnector* pDBServer);
 	void ShowDBMsg(int iServerID, int iCol, const std::string &msg);
 	std::string OnLineDBServer(int iServerID);
 	void RemoveServerInfo(void* pValue, const std::string &sKey);
@@ -87,5 +99,15 @@ private:
 	CC_UTILS::CLogSocket* m_pLogSocket;			// 连接日志服务的端口
 	CC_UTILS::CStringHash m_ServerHash;         // 区组列表 
 };
+
+/*
+procedure OnSetListView(Sender: TObject);
+function CheckConnectIP(const ConnectIP: ansistring): Boolean;
+procedure SocketError(Sender: TObject; var ErrorCode: integer);
+function CreateCustomSocket(const IP: ansistring): TCustomClient;
+procedure DBConnect(Sender: TObject);
+procedure DBDisConnect(Sender: TObject);
+
+*/
 
 #endif //__CC_DB_SERVER_SOCKET_H__
