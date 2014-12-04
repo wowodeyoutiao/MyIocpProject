@@ -450,8 +450,39 @@ void CDBServerSocket::SendServerInfoToPig(CPigClientSocket* pPigClient)
 	}
 }
 
-void CDBServerSocket::SendPigMsg(const char* pBuf, unsigned short usBufLen)
+void CDBServerSocket::SendPigMsg(char* pBuf, unsigned short usBufLen)
 {
+	if (usBufLen > sizeof(TPigMsgData))
+	{
+		char* pCurr = pBuf;
+		std::string sMsg("");
+		std::string sAreaList("");
+		PPigMsgData pMsgData = (PPigMsgData)pBuf;
+		if (usBufLen < pMsgData->usAreaLen + pMsgData->usMsgLen)
+		{
+			Log("PigMsg 数据长度错误！", lmtMessage);
+			return;
+		}
+
+		pCurr = pCurr + sizeof(TPigMsgData);
+		if (pMsgData->usAreaLen > 0)
+		{			
+			//----------------------------------
+			//-----这里的赋值，字符串的结束符问题
+			sAreaList.assign(pCurr, pMsgData->usAreaLen);
+		}
+		pCurr = pCurr + pMsgData->usAreaLen;
+		if (pMsgData->usMsgLen > 0)
+		{
+			//----------------------------------
+			//-----这里的赋值，字符串的结束符问题
+			sMsg.assign(pCurr, pMsgData->usMsgLen);
+		}
+		if ((sAreaList.compare("") == 0) || (sMsg.compare("") == 0))
+			return;
+
+
+	}
 	/*
 var
   sMsg, sAreaList   : AnsiString;

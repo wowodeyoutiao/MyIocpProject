@@ -55,6 +55,12 @@ typedef struct _TPigQueryServerInfo
 	char szServerName[SERVER_NAME_MAX_LEN+1];
 }TPigQueryServerInfo, *PPigQueryServerInfo;
 
+typedef struct _TPigMsgData
+{
+	unsigned char ucMsgType;
+	unsigned short usAreaLen;
+	unsigned short usMsgLen;
+}TPigMsgData, *PPigMsgData;
 
 
 const int SS_SEGMENTATION_SIGN = 0XFFEEDDCC;                        // 服务器之间通信协议起始标志

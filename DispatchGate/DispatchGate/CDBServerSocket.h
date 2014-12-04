@@ -69,7 +69,7 @@ public:
 	int SelectServer(CDGClient* pClient);
 	void SendSelectServer(CDGClient* pClient);
 	void SendServerInfoToPig(CPigClientSocket* pPigClient);
-	void SendPigMsg(const char* pBuf, unsigned short usBufLen);
+	void SendPigMsg(char* pBuf, unsigned short usBufLen);
 	int GetPlayerTotalCount();
 protected:
 	virtual void DoActive();
