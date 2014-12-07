@@ -37,4 +37,6 @@ private:
 	TServerAddress m_ServerArray[MAX_CENTER_SERVER_COUNT];        // ø…≈‰÷√∂‡∏ˆCenterServer           
 };
 
+extern CCenterClientSocket* pG_CenterSocket;
+
 #endif //__CC_CENTER_CLIENT_SOCKET_H__

@@ -4,6 +4,7 @@
 **************************************************************************************/
 #include "stdafx.h"
 #include "CClientServerSocket.h"
+#include "CDBServerSocket.h"
 
 using namespace CC_UTILS;
 
@@ -11,6 +12,8 @@ const std::string IPCONFIG_FILE = "ipaddress.txt";        // IP配置文件
 const int MAX_CONNECT_TIMEOUT = 30 * 1000;                // 最长的连接时间
 const int DELAY_DISCONNECT_TIME = 3000;                   // 延时断开时间
 const std::string War_Warning = "  本游戏区是自由对战模式，遵守游戏规则，可获得畅快游戏体验。</br>  龙界争霸现已开启<font color=\"0xFFDD0000\">防沉迷系统</font>，详细情况请关注游戏官网信息。";
+
+CClientServerSocket* pG_GateSocket;
 
 /************************Start Of CDGClient********************************************************/
 CDGClient::CDGClient() :m_ulLastConnectTick(GetTickCount()), m_ulForceCloseTick(0), m_usSelectMaskServerID(0), m_iEncodeIdx(0),
@@ -98,12 +101,7 @@ void CDGClient::ProcessReceiveMsg(char* pHeader, char* pData, int iDataLen)
 		ForceClose();
 		break;
 	default:
-		//----------------------------------------------------
-		//----------------------------------------------------
-		//----------------------------------------------------
-		//----------------------------------------------------
-		//Log(Format('收到未知客户端协议，IP=%s Ident=%d', [RemoteAddress, Ident]), lmtWarning);
-		Log("收到未知客户端协议", lmtWarning);
+		Log("收到未知客户端协议，IP=" + GetRemoteAddress() + " Ident=" + to_string(((PClientSocketHead)pHeader)->usIdent), lmtWarning);
 		break;
 	}
 }
@@ -161,25 +159,16 @@ void CDGClient::CMSelectServer(char* pBuf, unsigned short usBufLen)
 	else if (sizeof(TCMSelectServer) == usBufLen)
 	{
 		m_usSelectMaskServerID = ((PCMSelectServer)pBuf)->iMaskServerID;
-		//---------------------------------------------------------
-		//---------------------------------------------------------
-		//---------------------------------------------------------
-		//m_ucNetType = G_GateSocket.GetNetType(((PCMSelectServer)pBuf)->iMaskServerID);
+		m_ucNetType = pG_GateSocket->GetNetType(((PCMSelectServer)pBuf)->iMaskServerID);
 	}
 	else
 	{
 		OpenWindow(cwMessageBox, 0, "选择服务器失败");
-		std::string temps("选服务器失败: ServerID = ");
-		temps.append(to_string(m_usSelectMaskServerID));
-		Log(temps);
+		Log("选服务器失败: ServerID = " + to_string(m_usSelectMaskServerID));
 		return;
 	}
 
-	//-------------------------------------------------
-	//-------------------------------------------------
-	//-------------------------------------------------
-	//对资源服务器进行负载均衡
-	//m_iSelectRealServerID = G_DBSocket.SelectServer(this);
+	m_iSelectRealServerID = pG_DBSocket->SelectServer(this);
 	if (m_iSelectRealServerID > 0)
 	{
 		OpenWindow(cwWarRule, 0, War_Warning);
@@ -207,12 +196,7 @@ void CDGClient::CMCloseWindow(char* pBuf, unsigned short usBufLen)
 	if (usBufLen >= sizeof(TClientWindowRec))
 	{
 		if (cwWarRule == ((PClientWindowRec)pBuf)->WinType)
-		{
-			//--------------------------------
-			//--------------------------------
-			//--------------------------------
-			//G_DBSocket.SendSelectServer(Self);
-		}
+			pG_DBSocket->SendSelectServer(this);
 	}
 }
 
@@ -276,9 +260,7 @@ void CClientServerSocket::LoadConfig(CWgtIniFile* pIniFileParser)
 		{
 			m_sLocalIP = "0.0.0.0";
 			m_iListenPort = iPort;
-			sTemp = "接受客户端连接, Port = ";
-			sTemp.append(to_string(iPort));
-			Log(sTemp, lmtMessage);
+			Log("接受客户端连接, Port = " + to_string(iPort), lmtMessage);
 			Open();
 		}
 	}
@@ -298,10 +280,7 @@ bool CClientServerSocket::IsMasterIP(std::string &sIP)
 		pNode = (PIpRuleNode)*vIter;
 		if (pNode->ipType != itMaster)
 			continue;
-		//--------------------------------------
-		//--------------------------------------
-		//这个判断需要调试检验一下
-		if (sTempIP.find(pNode->sMatchIP) == 1)
+		if (sTempIP.find(pNode->sMatchIP) == 0)
 		{
 			retFlag = true;
 			break;
@@ -424,9 +403,6 @@ void CClientServerSocket::Clear()
 void CClientServerSocket::AddIpRuleNode(const std::string& sIP, TIpType ipType)
 {
 	std::string sTempIP;
-	//这里的字符串处理需要再检查---------------------
-	//这里的字符串处理需要再检查---------------------
-	//这里的字符串处理需要再检查---------------------
 	int iPos = sIP.find('*');
 	if (iPos != string::npos)
 		sTempIP = sIP.substr(0, iPos-1);
@@ -454,9 +430,9 @@ void CClientServerSocket::AddIpRuleNode(const std::string& sIP, TIpType ipType)
 4 : 移动
 5 : 教育网
 */
-unsigned short CClientServerSocket::GetNetType(int nAddr)
+unsigned char CClientServerSocket::GetNetType(int nAddr)
 {
-	unsigned short result = 0;
+	unsigned char result = 0;
 	for (int i = 0; i < MAX_NET_TYPE_CONFIG; i++)
 	{
 		if (0 == m_NetTypes[i])
@@ -482,10 +458,7 @@ bool CClientServerSocket::CheckConnectIP(const std::string& sIP)
 	for (vIter = m_IPRuleList.begin(); vIter != m_IPRuleList.end(); ++vIter)
 	{
 		pNode = (PIpRuleNode)*vIter;
-		//--------------------------------------
-		//--------------------------------------
-		//这个判断需要调试检验一下
-		if (sTempIP.find(pNode->sMatchIP) == 1)
+		if (sTempIP.find(pNode->sMatchIP) == 0)
 		{
 			switch (pNode->ipType)
 			{
@@ -505,8 +478,7 @@ bool CClientServerSocket::CheckConnectIP(const std::string& sIP)
 
 	if (!retFlag)
 	{
-		std::string sTemp(sIP + " 连接被禁止!");
-		Log(sTemp, lmtWarning);
+		Log(sIP + " 连接被禁止!", lmtWarning);
 	}
 	return retFlag;
 }
@@ -538,10 +510,7 @@ void CClientServerSocket::OnClientConnect(void* Sender)
 	}
 	else
 	{
-		//-------------------------------------------------------------
-		//-------------------------------------------------------------
-		//-------------------------------------------------------------
-		client->SetGMIP(/*G_GateSocket.IsMasterIP(Client.RemoteAddress)*/"");
+		client->SetGMIP(pG_GateSocket->IsMasterIP(client->GetRemoteAddress()));
 	}
 }
 

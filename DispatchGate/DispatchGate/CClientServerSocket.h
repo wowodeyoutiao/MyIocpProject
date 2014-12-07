@@ -61,6 +61,7 @@ public:
 	bool IsMasterIP(std::string &sIP);
 	void SMSelectServer(int iSocketHandle, char* pBuf, unsigned short usBufLen);  // 返回选服信息
 	TIpType GetDefaultRule();
+	unsigned char GetNetType(int nAddr);
 protected:
 	virtual void DoActive();
 private:
@@ -68,7 +69,6 @@ private:
 	void LoadIpConfigFile(const std::string& sFileName);
 	void Clear();
 	void AddIpRuleNode(const std::string& sIP, TIpType ipType);
-	unsigned short GetNetType(int nAddr); 
 	bool CheckConnectIP(const std::string& sIP);
 
 	CClientConnector* OnCreateClientSocket(const std::string& sIP);
@@ -83,5 +83,7 @@ private:
 	std::list<PIpRuleNode> m_IPRuleList;				 //iprule链表
 	unsigned long m_NetTypes[MAX_NET_TYPE_CONFIG];      //配置的根据客户端对于固定域名的不同解析，判断的网络类型
 };
+
+extern CClientServerSocket* pG_GateSocket;
 
 #endif //__CC_CLIENT_SERVER_SOCKET_H__

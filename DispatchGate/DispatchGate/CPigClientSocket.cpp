@@ -4,8 +4,11 @@
 **************************************************************************************/
 #include "stdafx.h"
 #include "CPigClientSocket.h"
+#include "CDBServerSocket.h"
 
 using namespace CC_UTILS;
+
+CPigClientSocket* pG_PigSocket;
 
 /************************Start Of CPigClientSocket******************************************/
 
@@ -131,10 +134,12 @@ void CPigClientSocket::ProcessReceiveMsg(PServerSocketHeader pHeader, const char
 	case SM_PING:
 		break;
 	case SM_PIG_MSG:
-		//G_DBSocket.SendPigMsg(PData, wBehindLen); //发送Pig消息
+		//注意：这里的转化需要考虑下是否改变代码的其它结构！！！
+		//注意：这里的转化需要考虑下是否改变代码的其它结构！！！
+		pG_DBSocket->SendPigMsg(const_cast<char*>(pData), iDataLen);   //发送Pig消息
 		break;
 	case SM_PIG_QUERY_AREA:
-		//G_DBSocket.SendAreaInfoToPig(Self); //查询区组信息
+		pG_DBSocket->SendServerInfoToPig(this);   //查询区组信息 
 		break;
 	default:
 		std::string temps("收到未知PigServer协议，Ident=");

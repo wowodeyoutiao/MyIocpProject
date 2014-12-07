@@ -138,7 +138,7 @@ namespace CC_UTILS{
 	class CLogSocket : public CExecutableBase
 	{
 	public:
-		CLogSocket(std::string &sName, bool bListView);
+		CLogSocket(const std::string &sName, bool bListView = false);
 		virtual ~CLogSocket();        
 		virtual void DoExecute();    
 

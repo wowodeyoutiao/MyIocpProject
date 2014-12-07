@@ -42,7 +42,7 @@ protected:
 	virtual void Execute(unsigned long ulTick){}
 	virtual void SocketRead(const char* pBuf, int iCount){}
 	int ParseSocketReadData(int iType, const char* pBuf, int iCount);                                     //由子类覆盖的SocketRead函数调用
-	virtual void ProcessReceiveMsg(PServerSocketHeader pHeader, const char* pData, int iDataLen){};       //处理具体的消息包数据，子类实现
+	virtual void ProcessReceiveMsg(PServerSocketHeader pHeader, char* pData, int iDataLen){};             //处理具体的消息包数据，子类实现
 private:
 	void UpdateActive();
 	void Clear();

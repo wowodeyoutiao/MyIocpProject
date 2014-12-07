@@ -4,8 +4,11 @@
 **************************************************************************************/
 #include "stdafx.h"
 #include "CCenterClientSocket.h"
+#include "CDBServerSocket.h"
 
 using namespace CC_UTILS;
+
+CCenterClientSocket* pG_CenterSocket;
 
 /************************Start Of CCenterClientSocket******************************************/
 
@@ -40,17 +43,10 @@ void CCenterClientSocket::LoadConfig(CWgtIniFile* pIniFileParser)
 				break;
 
 			vec.clear();
-		    SplitStr(sServerStr, ":", &vec);  //vec[0]是ip vec[1]是port port必须配置
-			//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-			//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-			//这里如果是无法转换成整数，则会报异常
-			//stoi这个函数不好用，需要做其它考虑了
-			//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-			//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-			iPort = stoi(vec[1]);   
+		    SplitStr(sServerStr, ":", &vec);  //vec[0]是ip vec[1]是port
+			iPort = CC_UTILS::StrToIntDef(vec[1], 0);
 			if (iPort > 0)
 			{
-				//端口必须配置
 				memcpy_s(m_ServerArray[i].IPAddress, sizeof(m_ServerArray[i].IPAddress), vec[0].c_str(), vec[0].length() + 1);
 				m_ServerArray[i].iPort = iPort;
 				bConfigOK = true;
@@ -106,9 +102,7 @@ void CCenterClientSocket::DoHeartBeat()
 			}
 			else
 			{
-				//-------------------
-				//SendToServerPeer(SM_PING, G_DBSocket.PlayerTotalCount, nullptr, 0);
-				//-------------------
+				SendToServerPeer(SM_PING, pG_DBSocket->GetPlayerTotalCount(), nullptr, 0);
 				m_iPingCount += 1;
 			}
 		}
@@ -174,9 +168,7 @@ void CCenterClientSocket::ProcessReceiveMsg(PServerSocketHeader pHeader, const c
 
 void CCenterClientSocket::OnSocketError(void* Sender, int& iErrorCode)
 {
-	std::string temps("CCenterClientSocket Socket Error, Code = ");
-	temps.append(to_string(iErrorCode));
-	Log(temps, lmtError);
+	Log("CCenterClientSocket Socket Error, Code = " + to_string(iErrorCode), lmtError);
 	iErrorCode = 0;
 }
 
@@ -191,12 +183,7 @@ void CCenterClientSocket::Reconnect()
 		m_Port = m_ServerArray[m_iWorkIndex].iPort;
 		if (m_Port > 0)
 		{		
-			std::string temps("Connect to CenterServer(");
-			temps.append(m_Address);
-			temps.append(":");
-			temps.append(to_string(m_Port));
-			temps.append(")");
-			Log(temps, lmtError);
+			Log("Connect to CenterServer(" + m_Address + ":" + to_string(m_Port) + ")", lmtError);
 			Open();
 		}
 	}
@@ -205,14 +192,10 @@ void CCenterClientSocket::Reconnect()
 
 void CCenterClientSocket::SendRegisterServer()
 {
+	std::string sIP = GetInternetIP();
 	TServerAddress address;
-	/*
-	  with Addr do
-	  begin
-		StrPLCopy(IPAddress, GetInternetIP, 15);
-		nPort := G_GateSocket.Port;
-	  end;
-	*/
+	memcpy_s(address.IPAddress, sizeof(address.IPAddress), sIP.c_str(), sIP.length() + 1);
+	address.iPort = pG_GateSocket->m_iListenPort;
 	SendToServerPeer(SM_REGISTER, 0, &address, sizeof(TServerAddress));
 }
 

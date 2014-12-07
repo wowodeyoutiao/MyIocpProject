@@ -39,7 +39,7 @@ public:
 	bool CheckClientIP(const std::string& sIP);
 protected:
 	virtual void SocketRead(const char* pBuf, int iCount);
-	virtual void ProcessReceiveMsg(PServerSocketHeader pHeader, const char* pData, int iDataLen);
+	virtual void ProcessReceiveMsg(PServerSocketHeader pHeader, char* pData, int iDataLen);
 private:
 	void SendHeartBeat(int iCount);                // 心跳返回
 	void RegisterDBServer(int iServerID);          // 注册DBServer
@@ -71,6 +71,8 @@ public:
 	void SendServerInfoToPig(CPigClientSocket* pPigClient);
 	void SendPigMsg(char* pBuf, unsigned short usBufLen);
 	int GetPlayerTotalCount();
+	void ShowDBMsg(int iServerID, int iCol, const std::string &msg);
+	bool RegisterDBServer(const std::string &sAddress, int iServerID, CDBConnector* pDBServer);
 protected:
 	virtual void DoActive();
 private:
@@ -82,8 +84,6 @@ private:
 	void OnSetListView(void* Sender);
 
 	void LoadServerConfig();
-	bool RegisterDBServer(const std::string &sAddress, int iServerID, CDBConnector* pDBServer);
-	void ShowDBMsg(int iServerID, int iCol, const std::string &msg);
 	std::string OnLineDBServer(int iServerID);
 	void RemoveServerInfo(void* pValue, const std::string &sKey);
 	//-----------------------------
@@ -100,14 +100,6 @@ private:
 	CC_UTILS::CStringHash m_ServerHash;         // 区组列表 
 };
 
-/*
-procedure OnSetListView(Sender: TObject);
-function CheckConnectIP(const ConnectIP: ansistring): Boolean;
-procedure SocketError(Sender: TObject; var ErrorCode: integer);
-function CreateCustomSocket(const IP: ansistring): TCustomClient;
-procedure DBConnect(Sender: TObject);
-procedure DBDisConnect(Sender: TObject);
-
-*/
+extern CDBServerSocket* pG_DBSocket;
 
 #endif //__CC_DB_SERVER_SOCKET_H__

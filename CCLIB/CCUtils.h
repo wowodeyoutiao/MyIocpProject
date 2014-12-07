@@ -66,6 +66,9 @@ namespace CC_UTILS{
 
 	//字符串分割
 	void SplitStr(const std::string& s, const std::string& delim, std::vector<std::string>* ret);
+
+	//字符串转整数，带默认值，不抛出异常
+	int StrToIntDef(const std::string& sTemp, const int iDef);
 }
 
 #endif //__CC_UTILS_H__

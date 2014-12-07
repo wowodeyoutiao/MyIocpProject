@@ -24,6 +24,7 @@ private:
 	unsigned long m_ulSlowRunTick;       //慢速执行tick
 	unsigned long m_ulCheckConfigTick;   //config文件检测
 	int m_iConfigFileAge;                //记录config文件的版本号
+	CC_UTILS::CLogSocket m_LogSocket;    //日志管理类
 };
 
 void Log(const std::string& sInfo, byte loglv = 0);

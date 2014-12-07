@@ -4,8 +4,11 @@
 **************************************************************************************/
 #include "stdafx.h"
 #include "CDBServerSocket.h"
+#include "CClientServerSocket.h"
 
 using namespace CC_UTILS;
+
+CDBServerSocket* pG_DBSocket;
 
 /************************Start Of CDBConnector******************************************/
 CDBConnector::CDBConnector() :m_iServerID(0), m_iPlayerCount(0), m_DefaultRule(itDeny), m_sDenyHint("服务器目前未开放，请等候"), m_sServerName("")
@@ -121,10 +124,7 @@ bool CDBConnector::CheckClientIP(const std::string& sIP)
 	for (vIter = m_IPRuleList.begin(); vIter != m_IPRuleList.end(); ++vIter)
 	{
 		pNode = (PIpRuleNode)*vIter;
-		//--------------------------------------
-		//--------------------------------------
-		//这个判断需要调试检验一下
-		if (sTempIP.find(pNode->sMatchIP) == 1)
+		if (sTempIP.find(pNode->sMatchIP) == 0)
 		{
 			switch (pNode->ipType)
 			{
@@ -156,7 +156,7 @@ void CDBConnector::SocketRead(const char* pBuf, int iCount)
 	}
 }
 
-void CDBConnector::ProcessReceiveMsg(PServerSocketHeader pHeader, const char* pData, int iDataLen)
+void CDBConnector::ProcessReceiveMsg(PServerSocketHeader pHeader, char* pData, int iDataLen)
 {
 	switch (pHeader->usIdent)
 	{
@@ -170,41 +170,32 @@ void CDBConnector::ProcessReceiveMsg(PServerSocketHeader pHeader, const char* pD
 			Log("DBServer版本错误", lmtError);
 		break;
 	case SM_SELECT_SERVER:
-		//----------------------------------------------
-		//----------------------------------------------
-		//----------------------------------------------
-		//----------------------------------------------
-		//G_GateSocket.smSelectServer(nParam, PData, wBehindLen);
+		pG_GateSocket->SMSelectServer(pHeader->iParam, pData, iDataLen);
 		break;
 	case SM_SERVER_CONFIG:
 		ReceiveConfig(pHeader->iParam, pData, iDataLen);
 		break;
 	default:
-		std::string temps("收到未知DBServer协议，Ident=");
-		temps.append(to_string(pHeader->usIdent));
-		Log(temps, lmtWarning);
+		Log("收到未知DBServer协议，Ident=" + to_string(pHeader->usIdent), lmtWarning);
 		break;
 	}
 }
 
 void CDBConnector::SendHeartBeat(int iCount)
 {
-	//----------------------------------------------
-	//----------------------------------------------
-	//G_DBSocket.ShowDBMsg(FServerID, 4, IntToStr(nCount));
+	pG_DBSocket->ShowDBMsg(m_iServerID, 4, to_string(iCount));
 	m_iPlayerCount = iCount;
 	SendToClientPeer(SM_PING, 0, nullptr, 0);
 }
 
 void CDBConnector::RegisterDBServer(int iServerID)
 {
-	//if G_DBSocket.RegisterDBServer(RemoteAddress, ServerID, Self)
-	if (true)
+	if (pG_DBSocket->RegisterDBServer(GetRemoteAddress(), iServerID, this))
 	{
 		m_DefaultRule = itAllow;
 		m_iServerID = iServerID;
-		//G_DBSocket.ShowDBMsg(ServerID, 3, RemoteAddress);
-		//G_DBSocket.ShowDBMsg(ServerID, 4, '0');
+		pG_DBSocket->ShowDBMsg(iServerID, 3, GetRemoteAddress());
+		pG_DBSocket->ShowDBMsg(iServerID, 4, "0");
 		std::string sTemp("DBServer ");
 		sTemp.append(to_string(m_iServerID));
 		sTemp.append(" Enabled.");
@@ -481,43 +472,7 @@ void CDBServerSocket::SendPigMsg(char* pBuf, unsigned short usBufLen)
 		if ((sAreaList.compare("") == 0) || (sMsg.compare("") == 0))
 			return;
 
-
-	}
-	/*
-var
-  sMsg, sAreaList   : AnsiString;
-  pCur, pData       : PAnsiChar;
-  i, iDataLen       : Integer;
-  DBServer          : TDBServer;
-  AreaList          : TStringList;
-begin
-  if BufLen > SizeOf(TPigMsgData) then
-  begin
-    pCur := Buf;
-    sMsg := '';
-    sAreaList := '';
-    with PPigMsgData(Buf)^ do
-    begin
-      if BufLen < wAreaLen + wMsgLen then
-      begin
-        Log(Format('PigMsg 数据长度错误！', [BufLen, wAreaLen + wMsgLen]));
-        Exit;
-      end;
-      Inc(pCur, SizeOf(TPigMsgData));
-      if wAreaLen > 0 then
-      begin
-        SetString(sAreaList, pCur, wAreaLen);
-        sAreaList := PAnsiChar(sAreaList);
-      end;
-      Inc(pCur, wAreaLen);
-      if wMsgLen > 0 then
-      begin
-        SetString(sMsg, pCur, wMsgLen);
-        sMsg := PAnsiChar(sMsg);
-      end;
-    end;
-    if (sAreaList = '') or (sMsg = '') then
-      Exit;
+		/*
     iDataLen := SizeOf(TPkgMsgHead) + Length(sMsg) + 10;
     AreaList := TStringList.Create;
     AreaList.Text := StringReplace(sAreaList, '|', #13#10, [rfReplaceAll]);
@@ -541,9 +496,8 @@ begin
       FreeMem(pData);
       AreaList.Free;
     end;
-  end;
-end;
-	*/
+		*/
+	}
 }
 
 int CDBServerSocket::GetPlayerTotalCount()

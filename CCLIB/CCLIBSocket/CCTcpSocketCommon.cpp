@@ -25,6 +25,64 @@ void SendDebugString(const std::string& sInfo)
 	std::cout << sInfo.c_str() << std::endl;
 }
 
+bool IsInternetIP(const u_long ulIP)
+{
+	bool retFlag = true;
+	unsigned char ucFirst;
+	unsigned char ucSecond;
+	ucFirst = ulIP & 0xFF;
+	ucSecond = (ulIP & 0xFF00) >> 8;
+	if (192 == ucFirst)
+		retFlag = false;
+	else if (10 == ucFirst)
+		retFlag = false;
+	else if ((172 == ucFirst) && (ucSecond > 15) && (ucSecond < 33))
+		retFlag = false;
+
+	return retFlag;
+}
+
+std::string GetInternetIP(const std::string& sDefaultIP)
+{
+	std::string sRetIP("");
+	char szHostName[256];
+	if (0 == gethostname(szHostName, sizeof(szHostName)))
+	{	
+		if (sDefaultIP.find("127.") == 0)
+		{
+			sRetIP = sDefaultIP;
+		}	
+		else
+		{
+			HOSTENT* pHost = gethostbyname(szHostName);
+			if (pHost != nullptr)
+			{
+				std::string sTempAddr;
+				PIN_ADDR* pAddr = (PIN_ADDR*)pHost->h_addr_list;
+				while (*pAddr != nullptr)
+				{
+					sTempAddr.assign(inet_ntoa(**pAddr));
+					if (sDefaultIP.compare(sTempAddr) == 0)
+					{
+						sRetIP = sTempAddr;
+						break;
+					}
+					else if (sRetIP.compare("") == 0)
+					{
+						sRetIP = sTempAddr;
+					}
+					else if (IsInternetIP((*pAddr)->s_addr))
+					{
+						sRetIP = sTempAddr;
+					}
+					pAddr += 1;
+				}
+			}
+		}
+	}
+	return sRetIP;
+}
+
 /************************Start Of _TSendBufferLinkedList**************************************************/
 void _TSendBufferLinkedList::DoInitial(const int iSize)
 {

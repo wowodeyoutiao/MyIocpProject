@@ -5,6 +5,7 @@
 
 #include "CCUtils.h"
 #include <Windows.h>
+#pragma comment(lib, "version.lib")
 
 namespace CC_UTILS{
 
@@ -235,5 +236,19 @@ namespace CC_UTILS{
 		{
 			ret->push_back(s.substr(last, index - last));
 		}
+	}
+
+	int StrToIntDef(const std::string& sTemp, const int iDef)
+	{
+		int iRetValue;
+		try
+		{
+			iRetValue = std::stoi(sTemp);
+		}
+		catch (...)
+		{
+			iRetValue = iDef;
+		}
+		return iRetValue;
 	}
 }

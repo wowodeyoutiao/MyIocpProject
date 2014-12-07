@@ -23,9 +23,10 @@ void DoRunThread()
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	std::thread* pClientThreads[10];
+	//std::thread* pClientThreads[10];
 	if (DoInitialWinSocket())
 	{
+		/*
 		for (int i = 0; i < 10; i++)
 		{
 			pClientThreads[i] = new std::thread(DoRunThread);
@@ -36,6 +37,13 @@ int _tmain(int argc, _TCHAR* argv[])
 		{
 			WaitForSingleObject(m_Event, 100);
 		}
+		*/
+		std::string sTemp = GetInternetIP("");
+		if (sTemp.find("192.") == 0)
+			sTemp.assign("1111");
+		std::cout << sTemp << std::endl;
+		char c;
+		std::cin >> c;
 	}
 	else
 	{

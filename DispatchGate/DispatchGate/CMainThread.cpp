@@ -3,33 +3,29 @@
 @content: 主线程单元
 **************************************************************************************/
 #include "stdafx.h"
+#include "CCenterClientSocket.h"
+#include "CClientServerSocket.h"
+#include "CDBServerSocket.h"
+#include "CPigClientSocket.h"
 
 using namespace CC_UTILS;
 
 /************************Start Of CMainThread**************************************************/
-CMainThread::CMainThread(const std::string &sServerName) : m_ulSlowRunTick(0), m_ulCheckConfigTick(0), m_iConfigFileAge(0)
+CMainThread::CMainThread(const std::string &sServerName) : m_ulSlowRunTick(0), m_ulCheckConfigTick(0), m_iConfigFileAge(0), m_LogSocket(sServerName)
 {
-	/*
-	m_LogSocket := TLogSocket.Create(ServerName);
-	G_DBSocket := TDBServerSocket.Create(ServerName);
-	G_GateSocket := TServerSocket.Create;
-	G_CenterSocket := TCenterSocket.Create;
-	G_Echo := TUDPEchoServer.Create(53);
-	G_PigSocket := TPigClient.Create;
-	*/
+	pG_DBSocket = new CDBServerSocket(sServerName);
+	pG_GateSocket = new CClientServerSocket;
+	pG_CenterSocket = new CCenterClientSocket;
+	pG_PigSocket = new CPigClientSocket;
 }
 
 CMainThread::~CMainThread()
 {
 	WaitThreadExecuteOver();
-	/*
-	G_PigSocket.Free;
-	G_CenterSocket.Free;
-	G_GateSocket.Free;
-	G_DBSocket.Free;
-	G_Echo.Free;
-	m_LogSocket.Free;
-	*/
+	delete pG_PigSocket;
+	delete pG_CenterSocket;
+	delete pG_GateSocket;
+	delete pG_DBSocket;
 }
 
 void CMainThread::CheckConfig(const unsigned long ulTick)
@@ -49,14 +45,10 @@ void CMainThread::CheckConfig(const unsigned long ulTick)
 			pIniFileParser->loadFromFile(sConfigFileName);
 			try
 			{
-				/*
-				G_DBSocket.LoadConfig(IniFile);
-				G_GateSocket.LoadConfig(IniFile);
-				G_PigSocket.LoadConfig(IniFile);
-
-				增加一个 
-				G_CenterServer.LoadCOnfig(IniFile);
-				*/
+				pG_DBSocket->LoadConfig(pIniFileParser);
+				pG_GateSocket->LoadConfig(pIniFileParser);
+				pG_PigSocket->LoadConfig(pIniFileParser);
+				pG_CenterSocket->LoadConfig(pIniFileParser);
 				delete pIniFileParser;
 			}
 			catch (...)
@@ -65,7 +57,6 @@ void CMainThread::CheckConfig(const unsigned long ulTick)
 			}
 		}
 	}
-
 }
 
 void CMainThread::DoExecute()
@@ -82,10 +73,9 @@ void CMainThread::DoExecute()
 			{
 				m_ulSlowRunTick = ulTick;
 				CheckConfig(ulTick);
-				/*
-				G_CenterSocket.DoHeartbeat;
-				G_PigSocket.DoHeartbest;
-				*/
+				
+				pG_CenterSocket->DoHeartBeat();
+				pG_PigSocket->DoHeartBeat();			
 			}
 		}
 		catch (...)
@@ -94,11 +84,10 @@ void CMainThread::DoExecute()
 		}
 		WaitForSingleObject(m_Event, 10);
 	}
-	/*
-	G_PigSocket.Close;
-	G_GateSocket.Close;
-	G_DBSocket.Close;
-	*/
+	pG_PigSocket->Close();
+	pG_CenterSocket->Close();
+	pG_DBSocket->Close();
+	pG_GateSocket->Close();
 }
 /************************End Of CMainThread****************************************************/
 

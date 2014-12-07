@@ -9,7 +9,7 @@
 namespace CC_UTILS{
 
 /************************Start Of CLogSocket******************************************/
-	CLogSocket::CLogSocket(std::string &sName, bool bListView) : m_sServiceName(sName), m_iPingCount(0), m_bListView(bListView), m_pListViewInfo(nullptr)
+	CLogSocket::CLogSocket(const std::string &sName, bool bListView) : m_sServiceName(sName), m_iPingCount(0), m_bListView(bListView), m_pListViewInfo(nullptr)
 	{
 		m_ClientSocket.m_OnConnect = std::bind(&CLogSocket::OnSocketConnect, this, std::placeholders::_1);
 		m_ClientSocket.m_OnDisConnect = std::bind(&CLogSocket::OnSocketDisconnect, this, std::placeholders::_1);
@@ -118,7 +118,7 @@ namespace CC_UTILS{
 			//---------------------------------
 			//---------------------------------
 			//??????????这个结构赋值应该有问题
-			memcpy(rec.info, pInfo, sizeof(TListViewInfo));
+			memcpy(&(rec.info), pInfo, sizeof(TListViewInfo));
 		}
 		m_ClientSocket.SendBuf((char*)&rec, sizeof(rec));
 	}
@@ -320,12 +320,7 @@ namespace CC_UTILS{
 		PRegisterInfoEx pInfo = (PRegisterInfoEx)(pBuf + sizeof(TLogSocketHead));
 		memcpy_s(pInfo->BaseInfo.szServiceName, sizeof(pInfo->BaseInfo.szServiceName), m_sServiceName.c_str(), m_sServiceName.length() + 1);
 		memcpy_s(pInfo->BaseInfo.szVersion, sizeof(pInfo->BaseInfo.szVersion), version.c_str(), version.length() + 1);
-
-		//---------------------------------
-		//---------------------------------
-		//---------------------------------
-		//??????????这个结构赋值应该有问题
-		memcpy(pInfo->ListViewInfo, m_pListViewInfo, sizeof(TListViewInfo));
+		memcpy(&(pInfo->ListViewInfo), m_pListViewInfo, sizeof(TListViewInfo));
 
 		m_ClientSocket.SendBuf(pBuf, iBufLen, true);
 	}
@@ -350,8 +345,6 @@ namespace CC_UTILS{
 
 	void CLogSocket::OnSocketConnect(void* Sender)
 	{
-		//if (m_OnConnectEvent != nullptr)
-		//	m_OnConnectEvent(Sender);
 		if ("" == m_sServiceName)
 		{
 			if (m_bListView)
@@ -364,8 +357,6 @@ namespace CC_UTILS{
 
 	void CLogSocket::OnSocketDisconnect(void* Sender)
 	{
-		//if (m_OnDisConnectEvent != nullptr)
-		//	m_OnDisConnectEvent(Sender);
 	}
 
 	void CLogSocket::OnSocketRead(void* Sender, const char* pBuf, unsigned short usBufLen)

@@ -91,6 +91,12 @@ void DoFinalizeWinSocket();
 //Debug信息
 void SendDebugString(const std::string& sInfo);
 
+//判断当前ip是否是外网ip，根据当前内网设置来调整
+bool IsInternetIP(const u_long ulIP);
+
+//返回本机的对外ip地址
+std::string GetInternetIP(const std::string& sDefaultIP = "");
+
 /*
 * 挂载到线程上运行的对象基类
 *

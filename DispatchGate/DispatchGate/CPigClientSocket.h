@@ -32,4 +32,6 @@ private:
 	int m_iPingCount;
 };
 
+extern CPigClientSocket* pG_PigSocket;
+
 #endif //__CC_PIG_CLIENT_SOCKET_H__
