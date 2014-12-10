@@ -6,6 +6,8 @@
 #include "CIocpSampleClient.h"
 #include <tchar.h>
 #include <iostream>
+#include <fstream>
+#include "JsonObjectBase.h"
 
 using namespace std;
 
@@ -38,10 +40,29 @@ int _tmain(int argc, _TCHAR* argv[])
 			WaitForSingleObject(m_Event, 100);
 		}
 		*/
-		std::string sTemp = GetInternetIP("");
-		if (sTemp.find("192.") == 0)
-			sTemp.assign("1111");
-		std::cout << sTemp << std::endl;
+
+
+		/*
+		CCJsonObjectTest test;
+		test.saveData.bFlag1 = 1;
+		test.saveData.sName1 = "hahahaha";
+		test.saveData.sName2 = "hehehehe";
+
+		std::ofstream file1;
+		file1.open("d:\jsonobjtest.txt");
+		file1 << test.AsString();
+		
+
+		CCJsonObjectTest test2;
+		std::ifstream file2;
+		file2.open("d:\jsonobjtest.txt");
+		string sTemp;
+		file2 >> sTemp;
+		test2.LoadFrom(sTemp);
+
+		std::cout << test2.saveData.bFlag1 << " " << test2.saveData.bFlag2 << " " << test2.saveData.sName1 << " " << test2.saveData.sName2 << std::endl;
+		*/
+
 		char c;
 		std::cin >> c;
 	}

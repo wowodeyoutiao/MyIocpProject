@@ -39,7 +39,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>..\..\CCLIB\CCLIBSocket;..\..\CCLIB;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\CCLIB\CCLIBSocket;..\..\CCLIB;..\..\CCLIB\jsoncpp;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -77,6 +77,8 @@
     <ClCompile Include="..\..\CCLIB\CCLIBSocket\CCTcpServerSocket.cpp" />
     <ClCompile Include="..\..\CCLIB\CCLIBSocket\CCTcpSocketCommon.cpp" />
     <ClCompile Include="..\..\CCLIB\CCUtils.cpp" />
+    <ClCompile Include="..\..\CCLIB\jsoncpp\jsoncpp.cpp" />
+    <ClCompile Include="..\..\CCLIB\JsonObjectBase.cpp" />
     <ClCompile Include="CIocpSampleClient.cpp" />
     <ClCompile Include="TestMain.cpp" />
   </ItemGroup>
