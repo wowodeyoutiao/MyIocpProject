@@ -90,53 +90,58 @@ bool CCJsonObjectBase::LoadFrom(const string &str)
 	Json::Value root;
 	if (reader.parse(str, root))
 	{
-		PJsonObjectInfo pInfo;
-		Json::Value::Members members = root.getMemberNames();
-		Json::Value::Members::iterator iter;
-		for (iter = members.begin(); iter != members.end(); ++iter)
-		{
-			pInfo = GetInfoByName(*iter);
-			if (pInfo != nullptr)
-			{
-				switch (pInfo->PropType)
-				{
-				case asInt:
-					(*(CC_INT*)pInfo->PropAddr) = root.get(*iter, 0).asInt();
-					break;
-				case asUInt:
-					(*(CC_UINT*)pInfo->PropAddr) = root.get(*iter, 0).asUInt();
-					break;
-				case asInt64:
-					(*(CC_INT64*)pInfo->PropAddr) = root.get(*iter, 0).asInt64();
-					break;
-				case asUInt64:
-					(*(CC_UINT64*)pInfo->PropAddr) = root.get(*iter, 0).asUInt64();
-					break;
-				case asString:
-					(*(string*)pInfo->PropAddr) = root.get(*iter, "").asString();
-					break;
-				case asDouble:
-					(*(CC_DOUBLE*)pInfo->PropAddr) = root.get(*iter, 0.0).asDouble();
-					break;
-				case asFloat:
-					(*(CC_FLOAT*)pInfo->PropAddr) = root.get(*iter, 0.0f).asFloat();
-					break;
-				case asBool:
-					(*(CC_BOOL*)pInfo->PropAddr) = root.get(*iter, false).asBool();
-					break;
-				case asArray:
-				case asObject:
-					LoadComplexPropFromJson(pInfo, root);
-					break;
-				default:
-					//我暂时只支持这几种类型，需要的可以自行添加 
-					break;
-				}
-			}
-		}
+		LoadFrom(root);
 		return true;
 	}
 	return false;
+}
+
+void CCJsonObjectBase::LoadFrom(Json::Value &jsonObj)
+{
+	PJsonObjectInfo pInfo;
+	Json::Value::Members members = jsonObj.getMemberNames();
+	Json::Value::Members::iterator iter;
+	for (iter = members.begin(); iter != members.end(); ++iter)
+	{
+		pInfo = GetInfoByName(*iter);
+		if (pInfo != nullptr)
+		{
+			switch (pInfo->PropType)
+			{
+			case asInt:
+				(*(CC_INT*)pInfo->PropAddr) = jsonObj.get(*iter, 0).asInt();
+				break;
+			case asUInt:
+				(*(CC_UINT*)pInfo->PropAddr) = jsonObj.get(*iter, 0).asUInt();
+				break;
+			case asInt64:
+				(*(CC_INT64*)pInfo->PropAddr) = jsonObj.get(*iter, 0).asInt64();
+				break;
+			case asUInt64:
+				(*(CC_UINT64*)pInfo->PropAddr) = jsonObj.get(*iter, 0).asUInt64();
+				break;
+			case asString:
+				(*(string*)pInfo->PropAddr) = jsonObj.get(*iter, "").asString();
+				break;
+			case asDouble:
+				(*(CC_DOUBLE*)pInfo->PropAddr) = jsonObj.get(*iter, 0.0).asDouble();
+				break;
+			case asFloat:
+				(*(CC_FLOAT*)pInfo->PropAddr) = jsonObj.get(*iter, 0.0f).asFloat();
+				break;
+			case asBool:
+				(*(CC_BOOL*)pInfo->PropAddr) = jsonObj.get(*iter, false).asBool();
+				break;
+			case asArray:
+			case asObject:
+				LoadComplexPropFromJson(pInfo, jsonObj);
+				break;
+			default:
+				//我暂时只支持这几种类型，需要的可以自行添加 
+				break;
+			}
+		}
+	}
 }
 
 /************************End Of CCJsonObjectBase******************************************/
@@ -162,3 +167,48 @@ void CCJsonObjectTest::SetPropertys()
 }
 
 /************************End Of CCJsonObjectTest******************************************/
+
+
+/************************Start Of CCJsonObjectTestEx******************************************/
+
+CCJsonObjectTestEx::CCJsonObjectTestEx(void)
+{
+	memset(&saveDataEx, 0, sizeof(saveDataEx));
+	SetPropertys();
+}
+
+void CCJsonObjectTestEx::SetPropertys()
+{
+	SetProperty("iNum1", asInt, &(saveDataEx.iNum1));
+	SetProperty("iNum2", asInt, &(saveDataEx.iNum2));
+	SetProperty("dataEx", asObject, &(saveDataEx.dataEx));	
+}
+
+void CCJsonObjectTestEx::AddComplexPropToJson(PJsonObjectInfo pInfo, Json::Value &jsonObj)
+{
+	if (pInfo != nullptr)
+	{
+		if (pInfo->PropName.compare("dataEx") == 0)
+		{
+			CCJsonObjectTest testdata;
+			testdata.saveData = *((PSaveTestData)pInfo->PropAddr);
+			jsonObj[pInfo->PropName] = testdata.AsJson();
+		}
+	}
+}
+
+void CCJsonObjectTestEx::LoadComplexPropFromJson(PJsonObjectInfo pInfo, Json::Value &jsonObj)
+{
+	if (pInfo != nullptr)
+	{
+		if (pInfo->PropName.compare("dataEx") == 0)
+		{		
+			CCJsonObjectTest testdata;
+			testdata.LoadFrom(jsonObj.get(pInfo->PropName, 0));
+			(*(PSaveTestData)pInfo->PropAddr) = testdata.saveData;
+		}
+	}
+}
+
+/************************End Of CCJsonObjectTestEx******************************************/
+

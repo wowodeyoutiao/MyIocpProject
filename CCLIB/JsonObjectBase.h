@@ -55,7 +55,8 @@ public:
 	virtual ~CCJsonObjectBase(void){}
 	string AsString();
 	Json::Value AsJson();
-	bool LoadFrom(const string &str);	
+	bool LoadFrom(const string &str);
+	void LoadFrom(Json::Value &jsonObj);
 };
 
 typedef struct _TSaveTestData
@@ -84,5 +85,17 @@ typedef struct _TSaveTestDataEx
 	int iNum2;
 	TSaveTestData dataEx;
 }TSaveTestDataEx, *PSaveTestDataEx;
+
+class CCJsonObjectTestEx : public CCJsonObjectBase
+{
+protected:
+	virtual void SetPropertys();
+	virtual void AddComplexPropToJson(PJsonObjectInfo pInfo, Json::Value &jsonObj);
+	virtual void LoadComplexPropFromJson(PJsonObjectInfo pInfo, Json::Value &jsonObj);
+public:
+	CCJsonObjectTestEx(void);
+public:
+	TSaveTestDataEx saveDataEx;
+};
 
 #endif  //__CC_JSON_OBJECT_BASE_H__
