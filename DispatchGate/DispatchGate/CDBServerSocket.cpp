@@ -593,7 +593,50 @@ void CDBServerSocket::OnSetListView(void* Sender)
 
 void CDBServerSocket::LoadServerConfig()
 {
+	unsigned long ulTick = GetTickCount();
+	if ((0 == m_ulLastCheckTick) || (ulTick - m_ulLastCheckTick >= 30000))
+	{
+		m_ulLastCheckTick = ulTick;
+		std::string sFileName(G_CurrentExeDir + "AreaConfig.json");
+		int iAge = GetFileAge(sFileName);
+		if ((iAge != -1) && (iAge != m_iConfigFileAge))
+		{
+			if (m_iConfigFileAge > 0)
+				Log("AreaConfig.json is Reloaded.", lmtMessage);
+			m_iConfigFileAge = iAge;
 
+			/*
+      js := TlkJSONstreamed.LoadFromFile(FileName);
+      if Assigned(js) then
+      begin
+        js2 := js;
+        if not (js is TlkJSONlist) then
+        begin
+          js1 := js.Field['AreaConfig'];
+          if Assigned(js1) then
+            js2 := js1
+          else
+            Exit;
+        end;
+        if js2 is TlkJSONlist then
+        begin
+          FServerList.Clear;
+          FreeAndNil(FLogSocket);
+          FServerList.Lock;
+          try
+            TlkJSONlist(js2).ForEach(EnumAreaConfig, nil);
+          finally
+            FServerList.UnLock;
+          end;
+          FLogSocket := TLogSocket.Create(FServerName, True);
+          FLogSocket.OnConnect := OnSetListView;
+        end;
+        js.Free;
+      end;
+			*/
+
+		}
+	}
 }
 
 bool CDBServerSocket::RegisterDBServer(const std::string &sAddress, int iServerID, CDBConnector* pDBServer)
