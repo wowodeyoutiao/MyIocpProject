@@ -83,7 +83,9 @@ typedef struct _TSaveTestDataEx
 {
 	int iNum1;
 	int iNum2;
+	int IntArrayData[100];
 	TSaveTestData dataEx;
+	TSaveTestData dataExArray[10];
 }TSaveTestDataEx, *PSaveTestDataEx;
 
 class CCJsonObjectTestEx : public CCJsonObjectBase

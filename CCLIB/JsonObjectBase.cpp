@@ -17,9 +17,8 @@ void CCJsonObjectBase::SetProperty(string name, CEnumJsonTypeMap type, void* add
 
 string CCJsonObjectBase::AsString()
 {
-	Json::Value jsonObj(AsJson());
 	Json::FastWriter jsonWrite;
-	string retString = jsonWrite.write(jsonObj);
+	string retString = jsonWrite.write(AsJson());
 	return retString;
 }
 
@@ -181,7 +180,9 @@ void CCJsonObjectTestEx::SetPropertys()
 {
 	SetProperty("iNum1", asInt, &(saveDataEx.iNum1));
 	SetProperty("iNum2", asInt, &(saveDataEx.iNum2));
+	SetProperty("IntArrayData", asArray, &(saveDataEx.IntArrayData[0]));
 	SetProperty("dataEx", asObject, &(saveDataEx.dataEx));	
+	SetProperty("dataExArray", asArray, &(saveDataEx.dataExArray));
 }
 
 void CCJsonObjectTestEx::AddComplexPropToJson(PJsonObjectInfo pInfo, Json::Value &jsonObj)
@@ -193,6 +194,26 @@ void CCJsonObjectTestEx::AddComplexPropToJson(PJsonObjectInfo pInfo, Json::Value
 			CCJsonObjectTest testdata;
 			testdata.saveData = *((PSaveTestData)pInfo->PropAddr);
 			jsonObj[pInfo->PropName] = testdata.AsJson();
+		}
+		else if (pInfo->PropName.compare("IntArrayData") == 0)
+		{
+			Json::Value intArray;
+			int iArrayLen = sizeof(saveDataEx.IntArrayData) / sizeof(saveDataEx.IntArrayData[0]);
+			for (int i = 0; i < iArrayLen; i++)
+				intArray.append((*((CC_INT*)pInfo->PropAddr + i)));
+			jsonObj[pInfo->PropName] = intArray;
+		}
+		else if (pInfo->PropName.compare("dataExArray") == 0)
+		{
+			Json::Value dataArray;
+			int iArrayLen = sizeof(saveDataEx.dataExArray) / sizeof(saveDataEx.dataExArray[0]);
+			CCJsonObjectTest itemdata;
+			for (int i = 0; i < iArrayLen; i++)
+			{
+				itemdata.saveData = *((PSaveTestData)pInfo->PropAddr + i);
+				dataArray.append(itemdata.AsJson());
+			}
+			jsonObj[pInfo->PropName] = dataArray;
 		}
 	}
 }
@@ -206,6 +227,24 @@ void CCJsonObjectTestEx::LoadComplexPropFromJson(PJsonObjectInfo pInfo, Json::Va
 			CCJsonObjectTest testdata;
 			testdata.LoadFrom(jsonObj.get(pInfo->PropName, 0));
 			(*(PSaveTestData)pInfo->PropAddr) = testdata.saveData;
+		}
+		else if (pInfo->PropName.compare("IntArrayData") == 0)
+		{
+			Json::Value intArray;
+			intArray = jsonObj.get(pInfo->PropName, 0);
+			for (int i = 0; i < intArray.size(); i++)
+				(*((CC_INT*)pInfo->PropAddr + i)) = intArray.get(i, 0).asInt();
+		}
+		else if (pInfo->PropName.compare("dataExArray") == 0)
+		{
+			Json::Value dataArray;
+			CCJsonObjectTest testdata;
+			dataArray = jsonObj.get(pInfo->PropName, 0);
+			for (int i = 0; i < dataArray.size(); i++)
+			{
+				testdata.LoadFrom(dataArray.get(i, 0));
+				(*((PSaveTestData)pInfo->PropAddr + i)) = testdata.saveData;
+			}
 		}
 	}
 }
