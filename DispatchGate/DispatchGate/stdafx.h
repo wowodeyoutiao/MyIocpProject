@@ -16,6 +16,7 @@
 #include <iostream>
 #include <vector>
 #include <list>
+#include <fstream>
 
 #include "CCUtils.h"
 #include "CCHashClass.h"
@@ -27,6 +28,7 @@
 #include "CGlobal.h"
 #include "CCGameCommon.h"
 #include "CCIniFileParser.h"
+#include "json\json.h"
 #include "CCLogSocket.h"
 #include "CMainThread.h"
 

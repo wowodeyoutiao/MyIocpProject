@@ -79,7 +79,7 @@ bool CNetworkEventClientSocketManager :: Open()
 			if (Addr.sin_addr.s_addr == u_long(INADDR_NONE))
 			{
 				PHOSTENT HostEnt = gethostbyname(m_Address.c_str());
-				if (HostEnt != nullptr) 
+				if (HostEnt != nullptr)
 				{
 					char** puAddr = HostEnt->h_addr_list;
 					do
@@ -87,30 +87,29 @@ bool CNetworkEventClientSocketManager :: Open()
 						Addr.sin_addr.s_addr = *(*puAddr);
 						//这个代码需要加回去。。。。。。
 						//if (std::rand(2) == 0)
-					    //    Break;
+						//    Break;
 						puAddr++;
-					}while((*puAddr) == nullptr);
+					} while ((*puAddr) == nullptr);
 				}
 				else
 				{
 					DoError(seConnect);
 				}
-
-				Addr.sin_port = htons(m_Port);
-				retflag = (WSAConnect(m_CSocket, (PSOCKADDR)&Addr, sizeof(Addr), nullptr, nullptr, nullptr, nullptr) == 0);
-				if (retflag)
-				{
-					m_Event = WSACreateEvent();
-					WSAEventSelect(m_CSocket, m_Event, FD_READ | FD_WRITE | FD_CLOSE);
-					m_BoActive = true;
-				}
-				else
-				{
-					closesocket(m_CSocket);
-					m_CSocket = INVALID_SOCKET;
-				}				
 			}
 
+			Addr.sin_port = htons(m_Port);
+			retflag = (WSAConnect(m_CSocket, (PSOCKADDR)&Addr, sizeof(Addr), nullptr, nullptr, nullptr, nullptr) == 0);
+			if (retflag)
+			{
+				m_Event = WSACreateEvent();
+				WSAEventSelect(m_CSocket, m_Event, FD_READ | FD_WRITE | FD_CLOSE);
+				m_BoActive = true;
+			}
+			else
+			{
+				closesocket(m_CSocket);
+				m_CSocket = INVALID_SOCKET;
+			}				
 		}
 	}
 	return retflag;

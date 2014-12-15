@@ -605,36 +605,53 @@ void CDBServerSocket::LoadServerConfig()
 				Log("AreaConfig.json is Reloaded.", lmtMessage);
 			m_iConfigFileAge = iAge;
 
-			/*
-      js := TlkJSONstreamed.LoadFromFile(FileName);
-      if Assigned(js) then
-      begin
-        js2 := js;
-        if not (js is TlkJSONlist) then
-        begin
-          js1 := js.Field['AreaConfig'];
-          if Assigned(js1) then
-            js2 := js1
-          else
-            Exit;
-        end;
-        if js2 is TlkJSONlist then
-        begin
-          FServerList.Clear;
-          FreeAndNil(FLogSocket);
-          FServerList.Lock;
-          try
-            TlkJSONlist(js2).ForEach(EnumAreaConfig, nil);
-          finally
-            FServerList.UnLock;
-          end;
-          FLogSocket := TLogSocket.Create(FServerName, True);
-          FLogSocket.OnConnect := OnSetListView;
-        end;
-        js.Free;
-      end;
-			*/
+			ifstream configFile;
+			configFile.open(sFileName);
+			std::string sJosnStr;
+			configFile >> sJosnStr;
+			configFile.close();
 
+			Json::Reader reader;
+			Json::Value root;
+			if (reader.parse(sJosnStr, root))
+			{
+				if (root.isArray())
+				{
+					delete m_pLogSocket;
+					m_ServerHash.Clear();
+					{
+						std::string sAreaName;
+						PServerConfigInfo pInfo;
+						Json::Value item;
+						std::lock_guard<std::mutex> guard(m_LockCS);
+						for (int i = 0; i < root.size(); i++)
+						{
+							item = root.get(i, 0);
+							sAreaName = item.get("AreaName", "").asString();
+							if (m_ServerHash.ValueOf(sAreaName) == nullptr)
+							{
+								pInfo = new TServerConfigInfo;
+								pInfo->sServerName = sAreaName;
+								pInfo->iMaskServerID = item.get("AreaID", 0).asInt();
+								pInfo->iRealServerID = item.get("ServerID", 0).asInt();
+								pInfo->sServerIP = item.get("ServerIP", "").asString();
+								m_ServerHash.Add(sAreaName, pInfo);
+								m_sAllowDBServerIP.append(pInfo->sServerIP + "|");
+							}
+							else
+							{
+								Log("ÇøÃûÖØ¸´: " + sAreaName, lmtError);
+							}
+						}
+					}					
+					m_pLogSocket = new CC_UTILS::CLogSocket(m_sServerName, true);
+					m_pLogSocket->InitialWorkThread();
+					//-------------------------------------
+					//-------------------------------------
+					//-------------------------------------
+					//FLogSocket.OnConnect := OnSetListView;
+				}
+			}	
 		}
 	}
 }

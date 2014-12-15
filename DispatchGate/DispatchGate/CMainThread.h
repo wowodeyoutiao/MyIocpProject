@@ -18,14 +18,17 @@ public:
 	CMainThread(const std::string &sServerName);
 	virtual ~CMainThread();
 	void DoExecute();
+public:
+	CC_UTILS::CLogSocket* m_pLogSocket;  //日志管理类
 private:
 	void CheckConfig(const unsigned long ulTick);
 private:
 	unsigned long m_ulSlowRunTick;       //慢速执行tick
 	unsigned long m_ulCheckConfigTick;   //config文件检测
 	int m_iConfigFileAge;                //记录config文件的版本号
-	CC_UTILS::CLogSocket m_LogSocket;    //日志管理类
 };
+
+extern CMainThread* pG_MainThread;
 
 void Log(const std::string& sInfo, byte loglv = 0);
 

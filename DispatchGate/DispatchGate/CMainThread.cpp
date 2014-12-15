@@ -10,13 +10,16 @@
 
 using namespace CC_UTILS;
 
+CMainThread* pG_MainThread;
+
 /************************Start Of CMainThread**************************************************/
-CMainThread::CMainThread(const std::string &sServerName) : m_ulSlowRunTick(0), m_ulCheckConfigTick(0), m_iConfigFileAge(0), m_LogSocket(sServerName)
+CMainThread::CMainThread(const std::string &sServerName) : m_ulSlowRunTick(0), m_ulCheckConfigTick(0), m_iConfigFileAge(0), m_pLogSocket(nullptr)
 {
 	pG_DBSocket = new CDBServerSocket(sServerName);
 	pG_GateSocket = new CClientServerSocket;
 	pG_CenterSocket = new CCenterClientSocket;
 	pG_PigSocket = new CPigClientSocket;
+	m_pLogSocket = new CC_UTILS::CLogSocket(sServerName);
 }
 
 CMainThread::~CMainThread()
@@ -61,6 +64,12 @@ void CMainThread::CheckConfig(const unsigned long ulTick)
 
 void CMainThread::DoExecute()
 {
+	m_pLogSocket->InitialWorkThread();
+	pG_DBSocket->InitialWorkThread();
+	pG_GateSocket->InitialWorkThread();
+	pG_CenterSocket->InitialWorkThread();
+	pG_PigSocket->InitialWorkThread();
+
 	Log("DispatchGate Æô¶¯.");
 	unsigned long ulTick;
 	while (!IsTerminated())
@@ -75,7 +84,8 @@ void CMainThread::DoExecute()
 				CheckConfig(ulTick);
 				
 				pG_CenterSocket->DoHeartBeat();
-				pG_PigSocket->DoHeartBeat();			
+				pG_PigSocket->DoHeartBeat();	
+				Log("DispatchGate execute.");
 			}
 		}
 		catch (...)
@@ -94,5 +104,7 @@ void CMainThread::DoExecute()
 
 void Log(const std::string& sInfo, byte loglv)
 {
-	SendDebugString(sInfo);
+	//----------SendDebugString(sInfo);
+	if ((pG_MainThread != nullptr) && (pG_MainThread->m_pLogSocket != nullptr))
+		pG_MainThread->m_pLogSocket->SendLogMsg(sInfo, loglv);
 }

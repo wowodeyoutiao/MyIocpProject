@@ -273,7 +273,7 @@ namespace CC_UTILS{
 
 	void CLogSocket::LoadConfig()
 	{
-		std::string sConfigFileName(G_CurrentExeDir + "config.ini");
+		std::string sConfigFileName(G_CurrentExeDir + "\\config.ini");
 		CWgtIniFile* pIniFileParser = new CWgtIniFile();
 		pIniFileParser->loadFromFile(sConfigFileName);
 		try

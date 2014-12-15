@@ -9,18 +9,17 @@ using namespace CC_UTILS;
 
 char DEFAULT_SERVICE_NAME[] = "DispatchGate";
 char DEFAULT_DESCRIPTION[] = "LongGet 游戏登录网关服务";
-CMainThread* pMainThread = nullptr;
 
 bool DoAppStart(void* Sender)
 {
-	pMainThread = new CMainThread(DEFAULT_SERVICE_NAME);
-	pMainThread->InitialWorkThread();
+	pG_MainThread = new CMainThread(DEFAULT_SERVICE_NAME);
+	pG_MainThread->InitialWorkThread();
 	return true;
 }
 
 bool DoAppStop(void* Sender)
 {
-	delete pMainThread;
+	delete pG_MainThread;
 	return true;
 }
 
@@ -38,7 +37,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		if (DoInitialWinSocket())
 		{
 			G_CurrentExeFileName = argv[0];
-			G_CurrentExeDir = "\\";
+			G_CurrentExeDir = "E:\\MyProject\\C++Project\\MyIocpProject\\DispatchGate\\Debug";
 
 			ServiceManagerFunc = (TServiceManagerFunc)GetProcAddress(hWindowsServiceDll, "DoApplicationRun");
 			if (ServiceManagerFunc != nullptr)
